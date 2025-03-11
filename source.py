@@ -79,23 +79,34 @@ print('scans:')
 for scan in r['scans']:
     print('\t{}'.format(scan['name']))
 
-# Request a report export
-scan_id = 11 # FIXME hardcoded
+# Initialize a list to store all scan data
+all_scan_data = []
+
+# Loop through each scan and aggregate the data
 template_id = 197 # FIXME hardcoded
-r = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
+for scan in r['scans']:
+    scan_id = scan['id']
+    r = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
 
-# A token is generated, use it to download the associated report
-token = r['token']
-r = get(path=f'/tokens/{token}/download', text=True)
+    # A token is generated, use it to download the associated report
+    token = r['token']
+    r = get(path=f'/tokens/{token}/download', text=True)
 
-# Create a file from the downloaded report to be saved locally
-dir = '.' # Same directory as this Python script
-filename = 'test.csv'
+    # Append the data to the list
+    all_scan_data.append(r)
+
+# Create a single CSV file to aggregate all scan data
+dir = '.'  # Same directory as this Python script
+filename = 'aggregated_scans.csv'
 os.makedirs(dir, exist_ok=True)
 file_path = os.path.join(dir, filename)
+
 with open(file_path, 'w') as file:
-    file.write(r)
-print(f'\nFile created at: {file_path}')
+    # Write each scan's data to the file
+    for data in all_scan_data:
+        file.write(data)
+        file.write('\n')  # Add a newline between each scan's data
+print(f'\nAggregated file created at: {file_path}')
 
 # For readability
 print()
