@@ -20,17 +20,20 @@ import os
 # Nessus API stuff
 
 # Make sure the Tenable Nessus port (8834 by default) is open on the Nessus server's firewall
-NESSUS_URL = 'https://192.168.50.188:8834'
+NESSUS_URL = 'https://10.20.120.143:8834'
 
 # Get these from the Tenable Nessus GUI at Settings-->My Account--->API Keys--->Generate. Generating new keys invalidates old ones
-ACCESS_KEY = 'c0f9a8e531e747cfb55ff04c809b8e00f8b1711264e0f4a3f587e0c69cf47780'
-SECRET_KEY = '355fa0f7f27a11282a7775bbe563a3665b2106de601c73a92ba16a21d8e5ea4e'
+ACCESS_KEY = '8c04ecd4caca9fc56e0fa18e999712f6cb76396f0c033aebb7e51b7f548fc1b2'
+SECRET_KEY = '29a489ce023cd2422354a369055ba4aa1a4f7365c4c74733e00b59c78ee079dc'
 
 # X-ApiKeys HTTP header. This is in place of a username-password login
 API_KEYS = {'X-ApiKeys': f'accessKey={ACCESS_KEY}; secretKey={SECRET_KEY};'}
 
 # Suppress certificate verificaion warning when connecting to Nessus server
 urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
+
+# List of folders whose scan reports should be aggregated
+FOLDERS = []
 
 # HTTP request functions
 
@@ -73,29 +76,95 @@ def post(path, payload, headers=None):
 # For readability
 print()
 
-# Retrieve and print a list of scans
-r = get('/scans')
-print('scans:')
-for scan in r['scans']:
-    print('\t{}'.format(scan['name']))
+# Retrieve and print a list of folders
+#r = get('/folders')
+#print('folders:')
+#for folder in r['folders']:
+#    print('\t{}'.format(folder['name']))
+
+# Get an array of folder names to export scan reports of
+r_folders_scans = get('/scans')
+folder_names = []
+# If there are no user-defined folders, use all folder names except 'Trash'
+if (len(FOLDERS) == 0):
+    # Get an array of all folder names
+    for folder in r_folders_scans['folders']:
+        folder_names.append(folder['name'])
+
+    # Remove 'Trash' from folder name list
+    if 'Trash' in folder_names:
+        folder_names.remove('Trash')
+# If there are, use those
+else:
+    folder_names = FOLDERS
+
+# Get id of each selected folder
+folder_ids = []
+for folder in r_folders_scans['folders']:
+    if folder['name'] in folder_names:
+        folder_ids.append(folder['id'])
+
+# Get id of each scan where scan_type is vuln in selected folders
+scan_ids = []
+for scan in r_folders_scans['scans']:
+    if scan['folder_id'] in folder_ids:
+        if scan['scan_type'] == 'vuln':
+            scan_ids.append(scan['id'])
+
+# FIXME delete -- print names of "vuln" scans
+print('Scans of scan_type \"vuln\":')
+for scan in r_folders_scans['scans']:
+    if scan['id'] in scan_ids:
+        print('\t{}'.format(scan['name']))
+
+# Request a download token for each selected scan
+template_id = 197 # CSV template
+tokens = []
+for scan_id in scan_ids:
+    r_token = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
+    try:
+        # If a token exists for the scan_id
+        token = r_token['token']
+    except:
+        # If it doesn't, e.g. cancelled scan
+        token = None
+    if token:
+        tokens.append(token)
+
+# FIXME delete -- print tokens
+print(tokens)
+
+# Download the selected scans to destination_path
+destination_path = './reports'
+os.makedirs(destination_path, exist_ok=True)
+for token in tokens:
+    r_download = get(path=f'/tokens/{token}/download', text=True)
+    filename = f'{token}.csv'
+    file_path = os.path.join(destination_path, filename)
+    with open(file_path, 'w') as file:
+        file.write(r_download)
+    print(f'File created at {file_path}')
+
+# Empty the destination_path directory
+#os.rmdir(destination_path)
 
 # Request a report export
-scan_id = 11 # FIXME hardcoded
-template_id = 197 # FIXME hardcoded
-r = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
+#scan_id = 11 # FIXME hardcoded
+#template_id = 197 # FIXME hardcoded
+#r = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
 
 # A token is generated, use it to download the associated report
-token = r['token']
-r = get(path=f'/tokens/{token}/download', text=True)
+#token = r['token']
+#r = get(path=f'/tokens/{token}/download', text=True)
 
 # Create a file from the downloaded report to be saved locally
-dir = '.' # Same directory as this Python script
-filename = 'test.csv'
-os.makedirs(dir, exist_ok=True)
-file_path = os.path.join(dir, filename)
-with open(file_path, 'w') as file:
-    file.write(r)
-print(f'\nFile created at: {file_path}')
+#dir = '.' # Same directory as this Python script
+#filename = 'test.csv'
+#os.makedirs(dir, exist_ok=True)
+#file_path = os.path.join(dir, filename)
+#with open(file_path, 'w') as file:
+#    file.write(r)
+#print(f'\nFile created at: {file_path}')
 
 # For readability
 print()
