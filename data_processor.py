@@ -2,19 +2,76 @@
 # IMPORTS AND CONFIGURATION
 # ============================================================================
 
-# TODO: Import necessary libraries:
-# - pandas (for data processing)
-# - os, sys (for file handling)
-# - datetime (for timestamping)
-# - json (for storing processed data)
-# - smtplib, email.mime.* (for email notifications)
+#Importa necessary libraries:
+import os
+import sys
+import json
+import glob
+import logging
+from datetime import datetime
+
+# Core Libraries
+import pandas as pd
+import numpy as np
+
+#Email Libraries
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
+#Logging Setup
+logging.basicConfig(
+  level=logging.INFO,
+  format='%(asctime)s - %(levelname)s - %(message)s',
+  handlers=[
+    logging.FileHandler('vulnerability_processor.log'),
+    logging.StreamHandler()
+  ]
+)
+logger = logging.getLogger(__name__)
 
 # TODO: Define configuration variables:
-# - SCAN_DIRECTORY: Location of Nessus CSV exports
-# - OUTPUT_DIRECTORY: Where to save processed data for Grafana
-# - EMAIL_RECIPIENTS: List of email addresses for notifications
-# - SEVERITY_LEVELS: Dictionary mapping severity names to numeric values
+#___________
+#CHNAGE VALUES TO MATCH ENVIRONMENT!!!!!
+CONFIG = {
+    # Directories
+    'SCAN_DIRECTORY': 'data/raw_scans/',      # Where Nessus CSV exports are saved
+    'OUTPUT_DIRECTORY': 'data/processed/',    # Where to save processed data for Grafana
+    'HISTORY_DIRECTORY': 'data/history/',     # Where to save historical data
+    
+    # Email configuration
+    'EMAIL_ENABLED': False,                   # Set to True to enable email notifications
+    'EMAIL_SERVER': 'smtp.example.com',       # SMTP server address
+    'EMAIL_PORT': 587,                        # SMTP server port
+    'EMAIL_USER': 'alerts@example.com',       # Email username
+    'EMAIL_PASSWORD': 'password',             # Email password
+    'EMAIL_FROM': 'vulnerabilities@uniti.com',
+    'EMAIL_RECIPIENTS': [                     # List of email recipients
+        'austin.carr@uniti.com',
+        'rachel.carrey@uniti.com'
+    ],
+    
+    # Alert thresholds
+    'ALERT_ON_CRITICAL': True,                # Send alert if any critical vulnerabilities
+    'ALERT_ON_HIGH_COUNT': 5,                 # Send alert if high vulnerabilities exceed this number
+    'ALERT_ON_NEW_DEVICES': True,             # Send alert if new devices are detected
+    
+    # Data processing settings
+    'TOP_VULNERABILITIES_COUNT': 10,          # Number of top vulnerabilities to include in reports
+    'SEVERITY_LEVELS': {                      # Mapping of severity names to numeric values
+        'Critical': 4,
+        'High': 3,
+        'Medium': 2, 
+        'Low': 1,
+        'Info': 0
+    }
+}
 
+#ENSURE directories even exist
+for directory in [CONFIG['SCAN_DIRECTORY'], CONFIG['OUTPUT_DIRECTORY'], CONFIG['HISTORY_DIRECTORY']]:
+  os.makedirs(directory, exist_ok=True)
+
+logger.info("Configuration loaded, directories verified")
 
 # ============================================================================
 # CSV HANDLING FUNCTIONS
