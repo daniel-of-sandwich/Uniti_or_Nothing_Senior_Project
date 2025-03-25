@@ -93,6 +93,11 @@ print("Current CSV files:")
 for file in csv_files:
     print(f"\t{os.path.basename(file)}")
 
+# Remove aggregated file to rewrite another one
+if os.path.exists('aggregated_scans.csv'):
+    os.remove('aggregated_scans.csv')
+    print("File: 'aggregated_scans.csv' rewritten)")
+
 # Open the output file
 with open('aggregated_scans.csv', 'w', newline='', encoding='utf-8') as outfile:
     # Flag to write headers only once
