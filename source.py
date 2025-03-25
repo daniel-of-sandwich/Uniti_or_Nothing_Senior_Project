@@ -1,4 +1,4 @@
-# v0.2
+# v0.3
 
 # Daniel Forbes
 
@@ -16,6 +16,7 @@
 import requests
 from requests.packages import urllib3
 import os
+import csv
 
 # Nessus API stuff
 
@@ -61,26 +62,8 @@ def post(path, payload, headers=None):
         verify=False
     ).json()
 
-# PUT request to Nessus
-#def put(path, payload, headers=None):
-#    return requests.put(
-#        NESSUS_URL + path, 
-#        headers=headers if headers else API_KEYS, 
-#        json=payload, 
-#        verify=False
-#    ).json()
-
-# Retrieve and aggregate vulnerability scan reports
-# FIXME finish, replace hardcoded values
-
 # For readability
 print()
-
-# Retrieve and print a list of folders
-#r = get('/folders')
-#print('folders:')
-#for folder in r['folders']:
-#    print('\t{}'.format(folder['name']))
 
 # Get an array of folder names to export scan reports of
 r_folders_scans = get('/scans')
@@ -116,6 +99,7 @@ print('FIXME delete -- Scans of scan_type \"vuln\":')
 for scan in r_folders_scans['scans']:
     if scan['id'] in scan_ids:
         print('\t{}'.format(scan['name']))
+print()
 
 # Request a download token for each selected scan
 template_id = 197 # CSV template
@@ -131,9 +115,6 @@ for scan_id in scan_ids:
     if token:
         tokens.append(token)
 
-# FIXME delete -- print tokens
-print(tokens)
-
 # Download the selected scans to destination_path
 destination_path = './reports'
 os.makedirs(destination_path, exist_ok=True)
@@ -145,26 +126,52 @@ for token in tokens:
         file.write(r_download)
     print(f'File created at {file_path}')
 
-# Empty the destination_path directory
-#os.rmdir(destination_path)
+############################## seb ####################################
 
-# Request a report export
-#scan_id = 11 # FIXME hardcoded
-#template_id = 197 # FIXME hardcoded
-#r = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
+# Specify the directory containing your CSV files
+input_directory = r'./reports'
 
-# A token is generated, use it to download the associated report
-#token = r['token']
-#r = get(path=f'/tokens/{token}/download', text=True)
+# Find all CSV files in the specified directory
+filenames = os.listdir(input_directory)
+csv_files = []
+for filename in filenames:
+    csv_files.append(input_directory + '/' + filename)
 
-# Create a file from the downloaded report to be saved locally
-#dir = '.' # Same directory as this Python script
-#filename = 'test.csv'
-#os.makedirs(dir, exist_ok=True)
-#file_path = os.path.join(dir, filename)
-#with open(file_path, 'w') as file:
-#    file.write(r)
-#print(f'\nFile created at: {file_path}')
+# Check if any CSV files were found
+if not csv_files:
+    print(f"No CSV files found in directory: {input_directory}")
+    exit()
+
+# Open the output file
+with open('aggregated_scans.csv', 'w', newline='', encoding='utf-8') as outfile:
+    # Flag to write headers only once
+    headers_written = False
+
+    # Iterate through each CSV file
+    for csv_file in csv_files:
+        try:
+            with open(csv_file, 'r', encoding='utf-8') as infile:
+                reader = csv.reader(infile)
+                # Write headers only for the first file
+                if not headers_written:
+                    print('Writing headers')
+                    headers = next(reader)
+                    csv.writer(outfile).writerow(headers)
+                    headers_written = True
+                else:
+                    # Skip headers for subsequent files
+                    next(reader)
+                # Write data rows
+                for row in reader:
+                    csv.writer(outfile).writerow(row)
+
+        except Exception as e:
+            print(f"Error reading file {os.path.basename(csv_file)}: {e}")
+
+print(f"\nAggregated CSV file created: aggregated_scans.csv")
+print(f"Total files aggregated: {len(csv_files)}")
+
+########################################################################
 
 # For readability
 print()
