@@ -1,4 +1,4 @@
-# v0.1
+# v0.2
 
 # Daniel Forbes
 
@@ -20,7 +20,7 @@ import os
 # Nessus API stuff
 
 # Make sure the Tenable Nessus port (8834 by default) is open on the Nessus server's firewall
-NESSUS_URL = 'https://10.20.120.143:8834'
+NESSUS_URL = 'https://10.20.120.133:8834'
 
 # Get these from the Tenable Nessus GUI at Settings-->My Account--->API Keys--->Generate. Generating new keys invalidates old ones
 ACCESS_KEY = '8c04ecd4caca9fc56e0fa18e999712f6cb76396f0c033aebb7e51b7f548fc1b2'
@@ -112,7 +112,7 @@ for scan in r_folders_scans['scans']:
             scan_ids.append(scan['id'])
 
 # FIXME delete -- print names of "vuln" scans
-print('Scans of scan_type \"vuln\":')
+print('FIXME delete -- Scans of scan_type \"vuln\":')
 for scan in r_folders_scans['scans']:
     if scan['id'] in scan_ids:
         print('\t{}'.format(scan['name']))
