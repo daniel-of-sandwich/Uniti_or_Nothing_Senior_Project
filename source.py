@@ -17,6 +17,10 @@ import requests
 from requests.packages import urllib3
 import os
 
+# Imports for aggregation
+import csv
+import glob
+
 # Nessus API stuff
 
 # Make sure the Tenable Nessus port (8834 by default) is open on the Nessus server's firewall
@@ -73,40 +77,48 @@ def post(path, payload, headers=None):
 # For readability
 print()
 
-# Retrieve and print a list of scans
-r = get('/scans')
-print('scans:')
-for scan in r['scans']:
-    print('\t{}'.format(scan['name']))
+# Specify the directory containing your CSV files
+input_directory = r'[input directory folder path]'
 
-# Initialize a list to store all scan data
-all_scan_data = []
+# Find all CSV files in the specified directory
+csv_files = glob.glob(os.path.join(input_directory, '*.csv'))
 
-# Loop through each scan and aggregate the data
-template_id = 197 # FIXME hardcoded
-for scan in r['scans']:
-    scan_id = scan['id']
-    r = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
+# Check if any CSV files were found
+if not csv_files:
+    print(f"No CSV files found in directory: {input_directory}")
+    exit()
 
-    # A token is generated, use it to download the associated report
-    token = r['token']
-    r = get(path=f'/tokens/{token}/download', text=True)
+# Print found CSV files
+print("Current CSV files:")
+for file in csv_files:
+    print(f"\t{os.path.basename(file)}")
 
-    # Append the data to the list
-    all_scan_data.append(r)
+# Open the output file
+with open('aggregated_scans.csv', 'w', newline='', encoding='utf-8') as outfile:
+    # Flag to write headers only once
+    headers_written = False
 
-# Create a single CSV file to aggregate all scan data
-dir = '.'  # Same directory as this Python script
-filename = 'aggregated_scans.csv'
-os.makedirs(dir, exist_ok=True)
-file_path = os.path.join(dir, filename)
+    # Iterate through each CSV file
+    for csv_file in csv_files:
+        try:
+            with open(csv_file, 'r', encoding='utf-8') as infile:
+                reader = csv.reader(infile)
 
-with open(file_path, 'w') as file:
-    # Write each scan's data to the file
-    for data in all_scan_data:
-        file.write(data)
-        file.write('\n')  # Add a newline between each scan's data
-print(f'\nAggregated file created at: {file_path}')
+                # Write headers only for the first file
+                if not headers_written:
+                    headers = next(reader)
+                    csv.writer(outfile).writerow(headers)
+                    headers_written = True
+                else:
+                    # Skip headers for subsequent files
+                    next(reader)
 
-# For readability
-print()
+                # Write data rows
+                for row in reader:
+                    csv.writer(outfile).writerow(row)
+
+        except Exception as e:
+            print(f"Error reading file {os.path.basename(csv_file)}: {e}")
+
+print(f"\nAggregated CSV file created: aggregated_scans.csv")
+print(f"Total files aggregated: {len(csv_files)}")
