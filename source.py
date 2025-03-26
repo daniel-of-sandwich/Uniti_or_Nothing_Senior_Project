@@ -1,6 +1,8 @@
-# v0.4
+# v0.5
 
-# Daniel Forbes
+# Uniti or Nothing team
+# CIS-497-101 Spring 2025
+# University of South Alabama
 
 # Resources---
 # Nessus API: https://<nessus_server_ip>:<port>/api
@@ -30,10 +32,10 @@ API_KEYS = {'X-ApiKeys': f'accessKey={ACCESS_KEY}; secretKey={SECRET_KEY};'}
 # Suppress certificate verificaion warning when connecting to Nessus server
 urllib3.disable_warnings(category=urllib3.exceptions.InsecureRequestWarning)
 
-# List of folders whose scan reports should be aggregated
-FOLDERS = []
+# Get folder list from config file
+FOLDERS = config.FOLDERS
 
-# HTTP request functions
+######### HTTP request functions #########
 
 # GET request to Nessus
 def get(path, text=False):
@@ -59,11 +61,13 @@ def post(path, payload, headers=None):
         verify=False
     ).json()
 
+######### Download vulnerability scan reports #########
+
 # For readability
 print()
 
 # Get an array of folder names to export scan reports of
-r_folders_scans = get('/scans')
+r_folders_scans = get(r'/scans')
 folder_names = []
 # If there are no user-defined folders, use all folder names except 'Trash'
 if (len(FOLDERS) == 0):
@@ -91,39 +95,47 @@ for scan in r_folders_scans['scans']:
         if scan['scan_type'] == 'vuln':
             scan_ids.append(scan['id'])
 
-# FIXME delete -- print names of "vuln" scans
+# FIXME delete -- Print names of selected folders
+print('FIXME delete -- Selected folders:')
+for folder in r_folders_scans['folders']:
+    if folder['id'] in folder_ids:
+        print('\t{}:{}'.format(folder['id'], folder['name']))
+print()
+
+# FIXME delete -- Print names of "vuln" scans
 print('FIXME delete -- Scans of scan_type \"vuln\":')
 for scan in r_folders_scans['scans']:
     if scan['id'] in scan_ids:
-        print('\t{}'.format(scan['name']))
+        print('\t{}:{}'.format(scan['id'], scan['name']))
 print()
 
 # Request a download token for each selected scan
 template_id = 197 # CSV template
-tokens = []
+token_id_pairs = {}
 for scan_id in scan_ids:
     r_token = post(path=f'/scans/{scan_id}/export', payload={'format': 'csv', 'template_id': template_id})
+    token = None
     try:
         # If a token exists for the scan_id
         token = r_token['token']
     except:
-        # If it doesn't, e.g. cancelled scan
+        # If it doesn't for whatever reason, keep token as None
         token = None
-    if token:
-        tokens.append(token)
+    if token: # If not None
+        token_id_pairs[token] = scan_id
 
-# Download the selected scans to destination_path
-destination_path = './reports'
+# Download the selected scans to destination_path. If latter does not exist, create directory
+destination_path = r'./reports'
 os.makedirs(destination_path, exist_ok=True)
-for token in tokens:
+for token in token_id_pairs:
     r_download = get(path=f'/tokens/{token}/download', text=True)
-    filename = f'{token}.csv'
+    filename = f'{token_id_pairs[token]}.csv' # Filename is scan_id
     file_path = os.path.join(destination_path, filename)
     with open(file_path, 'w') as file:
-        file.write(r_download)
-    print(f'File created at {file_path}')
+        file.write(r_download) # Overwrites if <token_id>.csv already exists
+    print(f'File written at {file_path}') # FIXME -- delete
 
-############################## seb ####################################
+######## Aggregate reports into a single CSV file ########
 
 # Specify the directory containing your CSV files
 input_directory = r'./reports'
@@ -140,7 +152,8 @@ if not csv_files:
     exit()
 
 # Open the output file
-with open('aggregated_scans.csv', 'w', newline='', encoding='utf-8') as outfile:
+agg_filename = 'aggregated_reports.csv'
+with open(agg_filename, 'w', newline='', encoding='utf-8') as outfile:
     # Flag to write headers only once
     headers_written = False
 
@@ -151,7 +164,6 @@ with open('aggregated_scans.csv', 'w', newline='', encoding='utf-8') as outfile:
                 reader = csv.reader(infile)
                 # Write headers only for the first file
                 if not headers_written:
-                    print('Writing headers')
                     headers = next(reader)
                     csv.writer(outfile).writerow(headers)
                     headers_written = True
@@ -164,11 +176,13 @@ with open('aggregated_scans.csv', 'w', newline='', encoding='utf-8') as outfile:
 
         except Exception as e:
             print(f"Error reading file {os.path.basename(csv_file)}: {e}")
-
-print(f"\nAggregated CSV file created: aggregated_scans.csv")
+    
+    # If there are no CSV files (no scans, maybe)
+    if not csv_files:
+        print(f"No CSV files found in directory {input_directory}. Is ./reports directory empty?")
+    
+print(f"\nFile written at ./{agg_filename}")
 print(f"Total files aggregated: {len(csv_files)}")
-
-########################################################################
 
 # For readability
 print()
