@@ -1,4 +1,4 @@
-# v0.3
+# v0.4
 
 # Daniel Forbes
 
@@ -13,19 +13,16 @@
 # Tested on an Oracle VM VirtualBox Debian 12.9.0 virtual machine
 
 # Imports
+import config # Local file config.py
 import requests
 from requests.packages import urllib3
 import os
 import csv
 
-# Nessus API stuff
-
-# Make sure the Tenable Nessus port (8834 by default) is open on the Nessus server's firewall
-NESSUS_URL = 'https://10.20.120.133:8834'
-
-# Get these from the Tenable Nessus GUI at Settings-->My Account--->API Keys--->Generate. Generating new keys invalidates old ones
-ACCESS_KEY = '8c04ecd4caca9fc56e0fa18e999712f6cb76396f0c033aebb7e51b7f548fc1b2'
-SECRET_KEY = '29a489ce023cd2422354a369055ba4aa1a4f7365c4c74733e00b59c78ee079dc'
+# Get Nessus URL and API keys from config file
+NESSUS_URL = config.NESSUS_URL
+ACCESS_KEY = config.ACCESS_KEY
+SECRET_KEY = config.SECRET_KEY
 
 # X-ApiKeys HTTP header. This is in place of a username-password login
 API_KEYS = {'X-ApiKeys': f'accessKey={ACCESS_KEY}; secretKey={SECRET_KEY};'}
