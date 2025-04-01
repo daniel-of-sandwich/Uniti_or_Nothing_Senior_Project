@@ -153,9 +153,12 @@ if not csv_files:
     exit()
 
 # For each CSV file, read into a single dataframe
+scans_dfs = []
 for csv in csv_files:
-    scans_df = pd.read_csv(csv)
-    
+    df = pd.read_csv(csv)
+    scans_dfs.append(df)
+scans_df = pd.concat(scans_dfs, ignore_index=True, header=0)
+
 print(f"Total files aggregated to dataframe: {len(csv_files)}")
 print(f"Dataframe:")
 print(scans_df)
@@ -168,10 +171,6 @@ print(scans_df)
 
 # Saving the DataFrame as a CSV file 
 scans_csv_data = scans_df.to_csv('aggregate_reports.csv', index = False) 
-print('\nCSV String:\n', scans_csv_data) 
-
-# Open the output file
-agg_filename = 'aggregated_reports.csv'
     
 # For readability
 print()
