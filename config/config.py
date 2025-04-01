@@ -1,62 +1,31 @@
 # config.py
-# Central configuration for the Uniti Fiber Vulnerability Alert System
 
-import os
-from datetime import datetime
+# Nessus configuration
+NESSUS_URL = 'https://192.168.50.188:8834'
+ACCESS_KEY = 'c0f9a8e531e747cfb55ff04c809b8e00f8b1711264e0f4a3f587e0c69cf47780'
+SECRET_KEY = '355fa0f7f27a11282a7775bbe563a3665b2106de601c73a92ba16a21d8e5ea4e'
 
-# ======== File Paths ========
-# Base directory is the parent directory of the config module
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# Directory paths
+RAW_DATA_DIR = '../data/raw'
+PROCESSED_DATA_DIR = '../data/processed'
+LOGS_DIR = '../logs'
+DB_DIR = '../data/db'
+DB_PATH = '../data/db/vulnerability_data.db'
 
-# Data directories
-RAW_DATA_DIR = os.path.join(BASE_DIR, 'data', 'raw')
-PROCESSED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'processed')
+# Email configuration
+SMTP_SERVER = 'smtp.example.com'
+SMTP_PORT = 25
+SMTP_USER = 'alerts@example.com'
+SMTP_PASSWORD = 'your_password'
+EMAIL_SENDER = 'vulnerability-alerts@uniti.com'
+EMAIL_RECIPIENTS = ['you@uniti.com', 'me@uniti.com']
+EMAIL_SUBJECT = 'Vulnerability Alert Report'
 
-# Default output file for aggregated data
-DEFAULT_OUTPUT_FILE = os.path.join(PROCESSED_DATA_DIR, f'aggregated_vulnerabilities_{datetime.now().strftime("%Y%m%d")}.csv')
+# Alert thresholds
+ALERT_ON_CRITICAL = True
+ALERT_HIGH_THRESHOLD = 5
+ALERT_ON_NEW_DEVICES = True
 
-# Log directory
-LOG_DIR = os.path.join(BASE_DIR, 'logs')
-
-# ======== Nessus Settings ========
-# Columns expected in Nessus CSV output
-REQUIRED_COLUMNS = ['Plugin ID', 'CVE', 'CVSS', 'Risk', 'Host', 'Protocol', 'Port', 'Name', 'Synopsis']
-
-# ======== SMTP Server Settings ========
-# For development/testing
-SMTP_SERVER = "smtp.example.com"  # Replace with actual SMTP server in production
-SMTP_PORT = 25  # Common port for SMTP (25, 587 for TLS)
-
-# Authentication
-SMTP_USER = "your_username"  # Replace with actual username
-SMTP_PASSWORD = "your_password"  # Replace with actual password
-
-# Email Settings
-DEFAULT_SENDER = "vulnerability-alerts@uniti.com"
-DEFAULT_RECIPIENTS = ["austin.carr@uniti.com", "rachel.carrey@uniti.com"]
-
-# ======== Alert Thresholds ========
-# When to send alerts - set to 0 to always send for that category
-ALERT_THRESHOLDS = {
-    "Critical": 0,   # Send alert if any Critical vulnerabilities
-    "High": 5,       # Send alert if 5 or more High vulnerabilities
-    "Medium": 10,    # Send alert if 10 or more Medium vulnerabilities
-    "Low": 20        # Send alert if 20 or more Low vulnerabilities
-}
-
-# ======== Dashboard Settings ========
-# Grafana connection settings (for future use)
-GRAFANA_URL = "http://localhost:3000"  # Replace with actual Grafana URL
-GRAFANA_API_KEY = "your_api_key"  # Replace with actual API key
-
-# ======== Helper Functions ========
-# Create directories if they don't exist
-def ensure_directories_exist():
-    """Create necessary directories if they don't exist."""
-    for directory in [RAW_DATA_DIR, PROCESSED_DATA_DIR, LOG_DIR]:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-            print(f"Created directory: {directory}")
-
-# Call this when importing the config module
-ensure_directories_exist()
+# Notification frequency
+# Options: 'immediate', 'daily', 'weekly'
+NOTIFICATION_FREQUENCY = 'immediate'
