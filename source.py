@@ -1,4 +1,4 @@
-# v0.5
+# v0.6
 
 # Uniti or Nothing team
 # CIS-497-101 Spring 2025
@@ -136,7 +136,7 @@ for token in token_id_pairs:
         file.write(r_download) # Overwrites if <token_id>.csv already exists
     print(f'File written at {file_path}') # FIXME -- delete
 
-########################### Using Pandas to Transform .csv Files to Dataframes ###########################
+########################### Using Pandas to Transform .csv Files to Dataframe ###########################
 
 # Specify the directory containing your CSV files
 input_directory = r'./reports'
@@ -144,54 +144,34 @@ input_directory = r'./reports'
 # Find all CSV files in the specified directory
 filenames = os.listdir(input_directory)
 csv_files = []
+for filename in filenames:
+    csv_files = os.path.join(input_directory, filename)
 
 # Check if any CSV files were found
 if not csv_files:
     print(f"No CSV files found in directory: {input_directory}")
     exit()
 
-# For each CSV file located in the input_directory, 
-for filename in filenames:
-    csv_files = os.path.join(input_directory, filename)
-
 # For each CSV file, read into a single dataframe
 for csv in csv_files:
     scans_df = pd.read_csv(csv)
+    
+print(f"Total files aggregated to dataframe: {len(csv_files)}")
+print(f"Dataframe:")
+print(scans_df)
+
+##################################### Remove Rows with No-Risk Vulns #####################################
+
+
 
 ##########################################################################################################
 
+# Saving the DataFrame as a CSV file 
+scans_csv_data = scans_df.to_csv('aggregate_reports.csv', index = False) 
+print('\nCSV String:\n', scans_csv_data) 
+
 # Open the output file
 agg_filename = 'aggregated_reports.csv'
-with open(agg_filename, 'w', newline='', encoding='utf-8') as outfile:
-    # Flag to write headers only once
-    headers_written = False
-
-    # Iterate through each CSV file
-    for csv_file in csv_files:
-        try:
-            with open(csv_file, 'r', encoding='utf-8') as infile:
-                reader = csv.reader(infile)
-                # Write headers only for the first file
-                if not headers_written:
-                    headers = next(reader)
-                    csv.writer(outfile).writerow(headers)
-                    headers_written = True
-                else:
-                    # Skip headers for subsequent files
-                    next(reader)
-                # Write data rows
-                for row in reader:
-                    csv.writer(outfile).writerow(row)
-
-        except Exception as e:
-            print(f"Error reading file {os.path.basename(csv_file)}: {e}")
     
-    # If there are no CSV files (no scans, maybe)
-    if not csv_files:
-        print(f"No CSV files found in directory {input_directory}. Is ./reports directory empty?")
-    
-print(f"\nFile written at ./{agg_filename}")
-print(f"Total files aggregated: {len(csv_files)}")
-
 # For readability
 print()
