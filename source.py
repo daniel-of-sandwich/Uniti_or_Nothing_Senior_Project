@@ -20,6 +20,7 @@ import requests
 from requests.packages import urllib3
 import os
 import csv
+import pandas as pd
 
 # Get Nessus URL and API keys from config file
 NESSUS_URL = config.NESSUS_URL
@@ -135,7 +136,7 @@ for token in token_id_pairs:
         file.write(r_download) # Overwrites if <token_id>.csv already exists
     print(f'File written at {file_path}') # FIXME -- delete
 
-######## Aggregate reports into a single CSV file ########
+########################### Using Pandas to Transform .csv Files to Dataframes ###########################
 
 # Specify the directory containing your CSV files
 input_directory = r'./reports'
@@ -143,13 +144,21 @@ input_directory = r'./reports'
 # Find all CSV files in the specified directory
 filenames = os.listdir(input_directory)
 csv_files = []
-for filename in filenames:
-    csv_files.append(input_directory + '/' + filename)
 
 # Check if any CSV files were found
 if not csv_files:
     print(f"No CSV files found in directory: {input_directory}")
     exit()
+
+# For each CSV file located in the input_directory, 
+for filename in filenames:
+    csv_files = os.path.join(input_directory, filename)
+
+# For each CSV file, read into a single dataframe
+for csv in csv_files:
+    scans_df = pd.read_csv(csv)
+
+##########################################################################################################
 
 # Open the output file
 agg_filename = 'aggregated_reports.csv'
