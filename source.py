@@ -161,7 +161,7 @@ aggregate_scans_df = pd.concat(scans_dfs, ignore_index=True)
 
 print(f"Total files aggregated to dataframe: {len(csv_files)}")
 print(f"Dataframe:")
-print(scans_df)
+print(aggregate_scans_df)
 
 ##################################### Remove Rows with No-Risk Vulns #####################################
 
