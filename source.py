@@ -155,9 +155,9 @@ if not csv_files:
 # For each CSV file, read into a single dataframe
 scans_dfs = []
 for csv in csv_files:
-    df = pd.read_csv(csv)
+    df = pd.read_csv(csv, index_col=None, header=0)
     scans_dfs.append(df)
-scans_df = pd.concat(scans_dfs, ignore_index=True, header=0)
+aggregate_scans_df = pd.concat(scans_dfs, ignore_index=True)
 
 print(f"Total files aggregated to dataframe: {len(csv_files)}")
 print(f"Dataframe:")
