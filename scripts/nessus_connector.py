@@ -1,6 +1,8 @@
 # nessus_connector.py
-import requests
+import sys
 import os
+# Adds the parent directory to the path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from config import NESSUS_URL, ACCESS_KEY, SECRET_KEY, RAW_DATA_DIR
 
 def get_nessus_data():
