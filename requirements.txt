@@ -1,3 +1,6 @@
 pandas
 requests
-urllib3
+watchdog
+smtplib
+email
+sqlite3
