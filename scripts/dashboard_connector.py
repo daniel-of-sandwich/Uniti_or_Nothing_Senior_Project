@@ -3,9 +3,13 @@
 import os
 import sqlite3
 import pandas as pd
+import re  # Add regex for CVE extraction
 
-# Import config
-from config.config import PROCESSED_DATA_DIR, DB_DIR, DB_PATH
+# Hardcode paths instead of importing from config
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PROCESSED_DATA_DIR = os.path.join(BASE_DIR, 'data', 'processed')
+DB_DIR = os.path.join(BASE_DIR, 'data', 'db')
+DB_PATH = os.path.join(DB_DIR, 'vulnerability_data.db')
 
 def create_database_if_not_exists():
     """Create SQLite database if it doesn't exist already"""
@@ -91,19 +95,49 @@ def update_database():
             # Clear existing data
             conn.execute("DELETE FROM vulnerabilities")
             
+            # Check if CSV contains a CVE column
+            has_cve_column = 'CVE' in vulns_df.columns
+            
             # Insert data
             if not vulns_df.empty:
                 # Add rows to database
+                counter = 0  # Counter for successful CVE extractions
+                
                 for _, row in vulns_df.iterrows():
-                    # Get CVE ID if available
+                    # Extract CVE ID - using multiple possible sources
                     cve_id = 'Unknown'
-                    if 'Plugin Output' in vulns_df.columns and pd.notna(row.get('Plugin Output')):
-                        # Simple CVE extraction
-                        if 'CVE-' in str(row['Plugin Output']):
-                            import re
-                            match = re.search(r'CVE-\d{4}-\d{4,}', str(row['Plugin Output']))
-                            if match:
-                                cve_id = match.group(0)
+                    
+                    # Try to get CVE from the CVE column if it exists
+                    if has_cve_column and pd.notna(row.get('CVE')) and str(row.get('CVE')).strip() != '':
+                        cve_id = str(row['CVE'])
+                        counter += 1
+                    
+                    # If that didn't work, try to extract it from Plugin Output
+                    elif 'Plugin Output' in vulns_df.columns and pd.notna(row.get('Plugin Output')):
+                        plugin_output = str(row['Plugin Output'])
+                        # Look for CVE pattern (CVE-YYYY-NNNNN)
+                        cve_matches = re.findall(r'CVE-\d{4}-\d{4,}', plugin_output)
+                        if cve_matches:
+                            cve_id = cve_matches[0]  # Take the first match
+                            counter += 1
+                    
+                    # If that didn't work, try the Description field
+                    elif 'Description' in vulns_df.columns and pd.notna(row.get('Description')):
+                        description = str(row['Description'])
+                        # Look for CVE pattern
+                        cve_matches = re.findall(r'CVE-\d{4}-\d{4,}', description)
+                        if cve_matches:
+                            cve_id = cve_matches[0]  # Take the first match
+                            counter += 1
+                    
+                    # If that didn't work, try the Name field
+                    elif 'Name' in vulns_df.columns and pd.notna(row.get('Name')):
+                        name = str(row['Name'])
+                        # Look for CVE pattern
+                        cve_matches = re.findall(r'CVE-\d{4}-\d{4,}', name)
+                        if cve_matches:
+                            cve_id = cve_matches[0]  # Take the first match
+                            counter += 1
                     
                     # Get values with defaults for missing columns
                     risk = row.get('Risk', 'Unknown')
@@ -120,6 +154,7 @@ def update_database():
                     )
                 
                 print(f"Added {len(vulns_df)} vulnerability records to database")
+                print(f"Successfully extracted {counter} CVE IDs")
         
         # Process new devices data
         devices_file = os.path.join(PROCESSED_DATA_DIR, 'new_devices.csv')
