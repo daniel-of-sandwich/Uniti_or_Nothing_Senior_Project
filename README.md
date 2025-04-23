@@ -99,7 +99,7 @@ uniti_vulnerability_system/
 ├── data/
 │   ├── raw/                  # Raw CSV files from Nessus
 │   ├── processed/            # Aggregated CSV files
-│   └── db/                   # Database files for Grafana
+│   └── db/                   # SQLite database for Grafana
 ├── scripts/
 │   ├── vulnerability_aggregator.py  # Data processing script
 │   ├── email_sender.py              # Email notification script
