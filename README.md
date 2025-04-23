@@ -28,7 +28,7 @@ This system processes vulnerability reports from Tenable Nessus Essentials, aggr
 ## Setup Requirements
 
 ### Hardware
-- Linux VM for Nessus Server
+- Nessus Server
   - 4GB RAM minimum
   - 2-4 CPU cores
   - 20GB+ storage
@@ -90,7 +90,7 @@ python scripts/email_sender.py
 ```
 Then select option 2 to test without sending.
 
-## File Structure
+## Necessary File Structure
 
 ```
 uniti_vulnerability_system/
