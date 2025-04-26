@@ -220,6 +220,32 @@
                 "value": 209
               }
             ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "New"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "index": 0,
+                        "text": "No"
+                      },
+                      "1": {
+                        "index": 1,
+                        "text": "Yes"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
           }
         ]
       },
@@ -245,7 +271,7 @@
         "sortBy": [
           {
             "desc": false,
-            "displayName": "Severity"
+            "displayName": "CVSS v2.0"
           }
         ]
       },
@@ -270,7 +296,7 @@
       "type": "table"
     }
   ],
-  "refresh": "5s",
+  "refresh": "30s",
   "schemaVersion": 41,
   "tags": [],
   "templating": {
@@ -284,6 +310,6 @@
   "timezone": "browser",
   "title": "csc_497_project_1",
   "uid": "dek1f0hl1s8owf",
-  "version": 22,
+  "version": 23,
   "weekStart": ""
 }
