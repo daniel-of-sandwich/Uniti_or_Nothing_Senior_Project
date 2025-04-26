@@ -1,4 +1,4 @@
-# v0.6
+# v0.7
 
 # Uniti or Nothing team
 # CIS-497-101 Spring 2025
@@ -282,7 +282,8 @@ for scan in r_scans['scans']:
         values = [scan['id'], scan['name'], scan['scan_type'], scan['last_modification_date'], scan['folder_id']]
         
         # Format features and values into a DataFrame
-        new_row = pd.DataFrame([dict(zip(features, values))])
+        features_values_dict = dict(zip(features,values))
+        new_row = pd.DataFrame([features_values_dict])
         scan_df = pd.concat([scan_df, new_row], axis=0, ignore_index=True)
 
 ######## Prepare Folder table data ########
