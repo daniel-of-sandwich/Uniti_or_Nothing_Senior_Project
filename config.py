@@ -15,4 +15,4 @@ FOLDERS = []
 KEEP_FEATURES = ['CVE', 'CVSS v2.0 Base Score', 'Risk', 'Host', 'Protocol', 'Port', 'Name']
 # Available features using default Tenable Nessus CSV export settings:
 # 'Plugin ID', 'CVE', 'CVSS v2.0 Base Score', 'Risk', 'Host', 'Protocol', 'Port', 'Name', 'Synopsis', 'Description', 'Solution', 'See Also', 'Plugin Output'
-# IMPORTANT -- If changed, the sqlite3 'Vulnerability' table features will need to be altered
+# IMPORTANT -- If changed, the sqlite3 'Vulnerability' table features will need to be altered as well as any code interacting with them

@@ -1,8 +1,13 @@
-# v0.7
+# v0.8
 
 # Uniti or Nothing team
 # CIS-497-101 Spring 2025
 # University of South Alabama
+
+# Requirements---
+# Python 3.11.x
+# Python requests package
+# Python pandas package
 
 # Resources---
 # Nessus API: https://<nessus_server_ip>:<nessus_port>/api
@@ -23,8 +28,8 @@ from requests.packages import urllib3
 from os import path, mkdir, remove
 import csv
 import pandas as pd
+import numpy as np
 import sqlite3
-from datetime import datetime # datetime class from datetime package
 from shutil import copy2
 
 # Get Nessus URL and API keys from config file
@@ -74,34 +79,140 @@ def post(path, payload, headers=None):
         verify=False
     ).json()
 
+# Create sqlite3 database and tables
+def create_sqlite3_database(database_filename):
+    db = None
+    try:
+        # Create and connect to sqlite3 database
+        db = sqlite3.connect(database_filename)
+        cursor = db.cursor()
+        
+        # Create Folder table
+        create_folder_table_sql = '''
+            CREATE TABLE Folder (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                [type] TEXT NOT NULL
+            );
+        '''
+        cursor.execute(create_folder_table_sql)
+        
+        # Commit changes
+        db.commit()
+
+        # Create Scan table
+        create_scan_table_sql = '''
+            CREATE TABLE Scan (
+                id INTEGER PRIMARY KEY,
+                name TEXT NOT NULL,
+                scan_type TEXT NOT NULL,
+                last_modification_date DATETIME NOT NULL,
+                folder_id INTEGER NOT NULL,
+                FOREIGN KEY (folder_id) REFERENCES Folder(id)
+            );
+        '''
+        cursor.execute(create_scan_table_sql)
+
+        # Commit changes
+        db.commit()
+        
+        # Create Host table
+        create_host_table_sql = '''
+            CREATE TABLE Host (
+                Host TEXT NOT NULL,
+                scan_id INTEGER NOT NULL,
+                new_host INTEGER NOT NULL,
+                FOREIGN KEY (scan_id) REFERENCES Scan(id),
+                PRIMARY KEY (Host, scan_id)
+            );
+        '''
+        cursor.execute(create_host_table_sql)
+        
+        # Commit changes
+        db.commit()
+        
+        # Create Vulnerability table
+        create_vulnerability_table_sql = '''
+            CREATE TABLE Vulnerability (
+                CVE TEXT,
+                CVSS_v2_0_Base_Score REAL,
+                Risk TEXT,
+                [Host] TEXT,
+                Protocol TEXT,
+                Port INTEGER,
+                Name TEXT,
+                new_vuln INTEGER NOT NULL,
+                scan_id INTEGER NOT NULL,
+                FOREIGN KEY (scan_id) REFERENCES Scan(id),
+                FOREIGN KEY (Host) REFERENCES Host(Host)
+            );
+        '''
+        cursor.execute(create_vulnerability_table_sql)
+
+        # Commit changes
+        db.commit()
+
+    except sqlite3.Error as e:
+        print(f'Error with table creation: {e}')
+        # Rollback changes if there is an error
+        if db:
+            db.rollback()
+
+    finally:
+        # Close the database connection
+        if db:
+            db.close()
+
 # Insert data into sqlite3 database tables. *_data arguments are lists of lists, or None to skip
-def insert_data(database_filename, folder_data, scan_data, vulnerability_data):
+def insert_data(database_filename, folder_data, scan_data, host_data, vulnerability_data):
     db = None
     try:
         # Connect to sqlite3 database
         db = sqlite3.connect(database_filename)
         cursor = db.cursor()
-        
+
         # Insert data into Folder table
         if folder_data: # If not None
-            cursor.executemany("INSERT INTO Folder (id, name, type) VALUES (?, ?, ?)", folder_data)
+            insert_folder_data_sql = '''
+                INSERT INTO Folder (id, name, type)
+                VALUES (?, ?, ?)
+            '''
+            cursor.executemany(insert_folder_data_sql, folder_data)
             db.commit()
-        
+
         # Insert data into Scan table
         if scan_data:
-            cursor.executemany("INSERT INTO Scan (id, name, scan_type, last_modification_date, folder_id) VALUES (?, ?, ?, ?, ?)", scan_data)
+            insert_scan_data_sql = '''
+                INSERT INTO Scan (id, name, scan_type, last_modification_date, folder_id)
+                VALUES (?, ?, ?, ?, ?)
+            '''
+            cursor.executemany(insert_scan_data_sql, scan_data)
             db.commit()
-        
+
+        # Insert data into Host table
+        if host_data: # If not None
+            insert_host_data_sql = '''
+                INSERT INTO Host (Host, scan_id, new_host)
+                VALUES (?, ?, ?)
+            '''
+            cursor.executemany(insert_host_data_sql, host_data)
+            db.commit()
+
         # Insert data into Vulnerability table
         if vulnerability_data:
-            cursor.executemany("INSERT INTO Vulnerability (CVE, CVSS_v2_0_Base_Score, Risk, Host, Protocol, Port, Name, new_vuln, scan_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", vulnerability_data)
+            insert_vulnerability_data_sql = '''
+                INSERT INTO Vulnerability (CVE, CVSS_v2_0_Base_Score, Risk, Host, Protocol, Port, Name, new_vuln, scan_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            '''
+            cursor.executemany(insert_vulnerability_data_sql, vulnerability_data)
             db.commit()
-        
-    except sqlite3.Error:
+
+    except sqlite3.Error as e:
+        print(f'Error with data insertion: {e}')
         # Rollback changes if there is an error
         if db:
             db.rollback()
-    
+
     finally:
         # Close the database connection
         if db:
@@ -109,73 +220,19 @@ def insert_data(database_filename, folder_data, scan_data, vulnerability_data):
 
 ######## Setup 2/2 ########
 
-# If reports directory does not exist, create directory
+# Create new reports directory
 reports_path = r'./reports'
-if not path.isdir(reports_path):
+if path.isdir(reports_path):
+    try:
+        remove(reports_path)
+        mkdir(reports_path)
+    except:
+        None
+else:
     mkdir(reports_path)
 
-# If WORKING_DB sqlite3 database does not exist, create database and tables
-db = None
-try:
-    # Create and connect to sqlite3 database
-    db = sqlite3.connect(WORKING_DB)
-    cursor = db.cursor()
-
-    # Create Folder table
-    create_folder_table_sql = """
-        CREATE TABLE Folder (
-        id INTEGER PRIMARY KEY,
-        name TEXT NOT NULL,
-        [type] TEXT NOT NULL
-        );
-    """
-    cursor.execute(create_folder_table_sql)
-
-    # Create Scan table
-    create_scan_table_sql = """
-        CREATE TABLE Scan (
-            id INTEGER PRIMARY KEY,
-            name TEXT NOT NULL,
-            scan_type TEXT NOT NULL,
-            last_modification_date DATETIME NOT NULL,
-            folder_id INTEGER NOT NULL,
-            FOREIGN KEY (folder_id) REFERENCES Folder(id)
-        );
-    """
-    cursor.execute(create_scan_table_sql)
-
-    # Commit changes
-    db.commit()
-    
-    # Create Vulnerability table
-    create_vulnerability_table_sql = """
-        CREATE TABLE Vulnerability (
-            CVE TEXT,
-            CVSS_v2_0_Base_Score REAL,
-            Risk TEXT,
-            [Host] TEXT,
-            Protocol TEXT,
-            Port INTEGER,
-            Name TEXT,
-            new_vuln INTEGER NOT NULL,
-            scan_id INTEGER NOT NULL,
-            FOREIGN KEY (scan_id) REFERENCES Scan(id)
-        );
-    """
-    cursor.execute(create_vulnerability_table_sql)
-
-    # Commit changes
-    db.commit()
-
-except sqlite3.Error:
-    # Rollback changes if there is an error
-    if db:
-        db.rollback()
-
-finally:
-    # Close the database connection
-    if db:
-        db.close()
+# Create WORKING_DB
+create_sqlite3_database(WORKING_DB)
 
 ######## Find vulnerability scans in selected folders ########
 
@@ -231,10 +288,12 @@ for scan_id in scan_ids:
         token_to_scan_id[token] = scan_id
         good_scan_ids.append(scan_id)
 
-######## Download scan reports, prepare Vulnerability table data ########
+######## Download scan reports, prepare Vulnerability and partial Host table data ########
+
+vulnerability_df = pd.DataFrame()
+host_df = pd.DataFrame()
 
 # For every scan report able to be downloaded
-vulnerability_df = pd.DataFrame()
 for token in token_to_scan_id:
     # Get scan_id, create filename and file path for the current token
     scan_id = token_to_scan_id[token]
@@ -253,20 +312,30 @@ for token in token_to_scan_id:
     keep_features = [df_feature for df_feature in KEEP_FEATURES if df_feature in df.columns]
     df = df[keep_features]
     
-    # Remove info rows (non-vulnerability)
-    df = df[df['Risk'] != 'None']
-    
     # Append and populate new_vuln feature, will update later
-    df['new_vuln'] = 0
+    df['new_vuln'] = 1
     
     # Append and populate scan_id feature
     df['scan_id'] = scan_id
+    
+    # Get Host values before removing info rows
+    if host_df.empty:
+        host_df = df[['Host', 'scan_id']]
+    else:
+        host_df = pd.concat([host_df, df[['Host', 'scan_id']]], axis=0)
+    
+    # Remove info rows (non-vulnerability)
+    df = df[df['Risk'] != 'None']
     
     # Concat preprocessed DataFrame to vulnerability_df
     if vulnerability_df.empty:
         vulnerability_df = df
     else:
         vulnerability_df = pd.concat([vulnerability_df, df], axis=0)
+
+# Replace periods, spaces in column names to underscores
+vulnerability_df.columns = vulnerability_df.columns.str.replace('.', '_', regex=False)
+vulnerability_df.columns = vulnerability_df.columns.str.replace(' ', '_', regex=False)
 
 ######## Prepare Scan table data ########
 
@@ -300,17 +369,95 @@ for folder in r_scans['folders']:
     new_row = pd.DataFrame([dict(zip(features, values))])
     folder_df = pd.concat([folder_df, new_row], axis=0, ignore_index=True)
 
-######## Insert Folder, Scan, Vulnerability data into sqlite3 database ########
+######## Prepare Host table data ########
 
-insert_data(WORKING_DB, folder_df.values.tolist(), scan_df.values.tolist(), vulnerability_df.values.tolist())
+# Create host_df from unique Host values
+host_df = host_df.drop_duplicates()
+
+# Append and populate new_host feature, will update later
+host_df['new_host'] = 1
+
+######## Get previous Vulnerability and Host table data from DISPLAY_DB ########
+
+d_vulnerability_df = pd.DataFrame()
+d_host_df = pd.DataFrame()
+
+# If DISPLAY_DB exists
+if path.exists(DISPLAY_DB):
+    # Download previous table data
+    try:
+        # Connect to DISPLAY_DB
+        db = sqlite3.connect(DISPLAY_DB)
+        cursor = db.cursor()
+        
+        # Get Vulnerability table data
+        select_vulnerability_data_sql = '''
+            SELECT *
+            FROM Vulnerability;
+        '''
+        cursor.execute(select_vulnerability_data_sql)
+        values = cursor.fetchall()
+        features = [description[0] for description in cursor.description]
+        d_vulnerability_df = pd.DataFrame(values, columns=features)
+        d_vulnerability_df['new_vuln'] = 1 # For comparing later
+        
+        # Get Host table data
+        select_host_data_sql = '''
+            SELECT *
+            FROM Host;
+        '''
+        cursor.execute(select_host_data_sql)
+        values = cursor.fetchall()
+        features = [description[0] for description in cursor.description]
+        d_host_df = pd.DataFrame(values, columns=features)
+        d_host_df['new_host'] = 1 # For comparing later
+
+    except sqlite3.Error as e:
+        print(f'Error with data retrieval: {e}')
+        # Rollback changes if there is an error
+        if db:
+            db.rollback()
+
+    finally:
+        # Close the database connection
+        if db:
+            db.close()
+
+######## Compare current and previous Vulnerability data ########
+
+# Get features
+features = vulnerability_df.columns.tolist()
+
+# Mask is true where vulnerability_df row is in d_vulnerability_df
+mask = vulnerability_df.set_index(features).index.isin(d_vulnerability_df.set_index(features).index)
+
+# Where mask is true (vulnerability found previously), set new_vuln to 0 (not a new vulnerability)
+vulnerability_df.loc[mask, 'new_vuln'] = 0
+
+######## Compare current and previous Host data ########
+
+# Get features
+features = host_df.columns.tolist()
+
+# Mask is true where host_df row is in d_host_df
+mask = host_df.set_index(features).index.isin(d_host_df.set_index(features).index)
+
+# Where mask is true (host found previously), set new_host to 0 (not a new host)
+host_df.loc[mask, 'new_host'] = 0
+
+######## Insert Host, Folder, Scan, Vulnerability data into WORKING_DB ########
+
+insert_data(WORKING_DB, folder_df.values.tolist(), scan_df.values.tolist(), host_df.values.tolist(), vulnerability_df.values.tolist())
 
 ######## Replace DISPLAY_DB with WORKING_DB ########
 
+# Grafana OSS looks at DISPLAY_DB
+# Replace in one go so that Grafana never displays changing / in-progress values
 try:
     copy2(WORKING_DB, DISPLAY_DB)
     remove(WORKING_DB)
 except:
-    None
+    print('Could not replace database file.')
 
 # For readability
 print()

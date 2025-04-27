@@ -1,0 +1,483 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_FRSER-SQLITE-DATASOURCE",
+      "label": "frser-sqlite-datasource",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "frser-sqlite-datasource",
+      "pluginName": "SQLite"
+    }
+  ],
+  "__elements": {},
+  "__requires": [
+    {
+      "type": "datasource",
+      "id": "frser-sqlite-datasource",
+      "name": "SQLite",
+      "version": "3.5.0"
+    },
+    {
+      "type": "grafana",
+      "id": "grafana",
+      "name": "Grafana",
+      "version": "11.6.1"
+    },
+    {
+      "type": "panel",
+      "id": "table",
+      "name": "Table",
+      "version": ""
+    }
+  ],
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "Tenable Nessus vulnerability dashboard. Uses SQLite data connection to local file.",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "${DS_FRSER-SQLITE-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "fixedColor": "#808080",
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "noValue": "-",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "transparent"
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Severity"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "Critical": {
+                        "color": "red",
+                        "index": 0
+                      },
+                      "High": {
+                        "color": "orange",
+                        "index": 1
+                      },
+                      "Low": {
+                        "color": "green",
+                        "index": 3
+                      },
+                      "Medium": {
+                        "color": "yellow",
+                        "index": 2
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 138
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "New"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "text",
+                        "index": 0,
+                        "text": "No"
+                      },
+                      "1": {
+                        "color": "blue",
+                        "index": 1,
+                        "text": "Yes"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "custom.width",
+                "value": 105
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CVSS Score"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 143
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CVE"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 136
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 133
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Port"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 96
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Protocol"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 122
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Last Detected"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 177
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "CVSS Score"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "green"
+                    },
+                    {
+                      "color": "yellow",
+                      "value": 4
+                    },
+                    {
+                      "color": "orange",
+                      "value": 7
+                    },
+                    {
+                      "color": "red",
+                      "value": 9
+                    }
+                  ]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 12,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": true,
+          "enablePagination": false,
+          "fields": [],
+          "reducer": [
+            "count"
+          ],
+          "show": true
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "frser-sqlite-datasource",
+            "uid": "${DS_FRSER-SQLITE-DATASOURCE}"
+          },
+          "hide": false,
+          "queryText": "SELECT v.CVSS_v2_0_Base_Score AS 'CVSS Score', v.Risk AS 'Severity', \r\n  v.new_vuln AS 'New', s.last_modification_date AS 'Last Detected', \r\n  v.CVE AS 'CVE', v.[Host] AS 'Host', v.Port AS 'Port', v.Protocol AS 'Protocol', \r\n  v.Name AS 'Type', s.name AS 'Scan', f.name AS 'Folder'\r\nFROM Vulnerability AS v\r\nINNER JOIN Scan AS s ON v.scan_id=s.id\r\nINNER JOIN Folder AS f ON s.folder_id=f.id\r\nORDER BY v.new_vuln DESC, v.CVSS_v2_0_Base_Score DESC, s.last_modification_date DESC, s.name DESC;",
+          "queryType": "table",
+          "rawQueryText": "SELECT v.CVSS_v2_0_Base_Score AS 'CVSS Score', v.Risk AS 'Severity', \r\n  v.new_vuln AS 'New', s.last_modification_date AS 'Last Detected', \r\n  v.CVE AS 'CVE', v.[Host] AS 'Host', v.Port AS 'Port', v.Protocol AS 'Protocol', \r\n  v.Name AS 'Type', s.name AS 'Scan', f.name AS 'Folder'\r\nFROM Vulnerability AS v\r\nINNER JOIN Scan AS s ON v.scan_id=s.id\r\nINNER JOIN Folder AS f ON s.folder_id=f.id\r\nORDER BY v.new_vuln DESC, v.CVSS_v2_0_Base_Score DESC, s.last_modification_date DESC, s.name DESC;",
+          "refId": "A",
+          "timeColumns": [
+            "Last Detected"
+          ]
+        }
+      ],
+      "title": "Vulnerabilities",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "${DS_FRSER-SQLITE-DATASOURCE}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "left",
+            "cellOptions": {
+              "type": "auto",
+              "wrapText": false
+            },
+            "filterable": true,
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "New"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 88
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Date Detected"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 172
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Host"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 149
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "New"
+            },
+            "properties": [
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "0": {
+                        "color": "text",
+                        "index": 0,
+                        "text": "No"
+                      },
+                      "1": {
+                        "color": "blue",
+                        "index": 1,
+                        "text": "Yes"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 11,
+        "x": 0,
+        "y": 12
+      },
+      "id": 2,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": true,
+          "fields": "",
+          "reducer": [
+            "count"
+          ],
+          "show": true
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.6.1",
+      "targets": [
+        {
+          "datasource": {
+            "type": "frser-sqlite-datasource",
+            "uid": "${DS_FRSER-SQLITE-DATASOURCE}"
+          },
+          "queryText": "SELECT DISTINCT h.Host AS 'Host', h.new_host AS 'New', s.last_modification_date AS 'Date Detected', s.name AS 'Scan', f.name AS 'Folder'\nFROM Host AS h\nINNER JOIN Scan AS s ON h.scan_id = s.id\nINNER JOIN Folder AS f ON s.folder_id = f.id\nORDER BY h.new_host DESC, s.last_modification_date DESC, h.scan_id DESC, h.Host ASC;",
+          "queryType": "table",
+          "rawQueryText": "SELECT DISTINCT h.Host AS 'Host', h.new_host AS 'New', s.last_modification_date AS 'Date Detected', s.name AS 'Scan', f.name AS 'Folder'\nFROM Host AS h\nINNER JOIN Scan AS s ON h.scan_id = s.id\nINNER JOIN Folder AS f ON s.folder_id = f.id\nORDER BY h.new_host DESC, s.last_modification_date DESC, h.scan_id DESC, h.Host ASC;",
+          "refId": "A",
+          "timeColumns": [
+            "Date Detected"
+          ]
+        }
+      ],
+      "title": "Hosts",
+      "type": "table"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "csc_497_project",
+  "uid": "dek1f0hl1s8owf",
+  "version": 46,
+  "weekStart": ""
+}
