@@ -61,7 +61,7 @@ uniti_vulnerability_system/
 
 ### 1. System Requirements
 
-- Linux server with at least 4GB RAM
+- Server with at least 4GB RAM
 - Python 3.7+ with pip
 - Tenable Nessus
 - Grafana OSS
