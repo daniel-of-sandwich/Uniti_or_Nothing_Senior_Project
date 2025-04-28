@@ -25,91 +25,172 @@ This system processes vulnerability reports from Tenable Nessus Essentials, aggr
 - Sends email notifications when thresholds are met
 - Visual dashboard with color-coded risk levels
 
-## Setup Requirements
+### Key Features
 
-### Hardware
-- Nessus Server
-  - 4GB RAM minimum
-  - 2-4 CPU cores
-  - 20GB+ storage
-- Additional VMs (with different OS configurations) for testing
+- Automated aggregation of Nessus vulnerability scan reports
+- Detailed visualization dashboard with risk-based color coding
+- New device detection between network scans
+- Smart alerting based on configurable thresholds
+- Historical tracking of network vulnerability status
 
-### Software
-- Tenable Nessus Essentials
-- Python 3.x
-- Grafana (OSS)
+## System Architecture
 
-## Installation
-
-1. Clone this repository:
 ```
-git clone https://github.com/YOUR-USERNAME/Vulnerability-Alert-Aggregation-System.git
-cd Vulnerability-Alert-Aggregation-System
+[Nessus Scans] → [CSV Export] → [Python Processing] → [SQLite Database] → [Grafana Dashboard] → [Grafana Alerts]
 ```
 
-2. Install Python dependencies:
-```
-pip install -r requirements.txt
-```
-
-3. Set up configuration:
-   - Edit the `config.py` file with your settings:
-     - Nessus server details
-     - Email configuration
-     - Directory paths
-     - Alert thresholds
-
-4. Create necessary directories:
-```
-mkdir -p data/raw data/processed data/db logs
-```
-
-5. Install and configure Nessus Essentials on your Linux VM.
-
-6. Set up Grafana and import the dashboard.
-
-## Usage
-
-### Running the System
-
-1. Use the main script to run the full process:
-```
-python run.py
-```
-
-2. For continuous monitoring, use the file watcher:
-```
-python scripts/file_watcher.py
-```
-
-### Email Alerts
-
-To test email functionality without sending:
-```
-python scripts/email_sender.py
-```
-Then select option 2 to test without sending.
-
-## Necessary File Structure
+## Project Structure
 
 ```
 uniti_vulnerability_system/
 ├── config/
-│   ├── config.py             # Configuration settings
+│   ├── config.py           # Main configuration file 
 ├── data/
-│   ├── raw/                  # Raw CSV files from Nessus
-│   ├── processed/            # Aggregated CSV files
-│   └── db/                   # SQLite database for Grafana
+│   ├── raw/                # Raw CSV files from Nessus
+│   ├── processed/          # Aggregated CSV files
+│   └── db/                 # SQLite database
 ├── scripts/
-│   ├── vulnerability_aggregator.py  # Data processing script
-│   ├── email_sender.py              # Email notification script
-│   ├── dashboard_connector.py       # Database update script
-│   ├── file_watcher.py              # Monitors for new CSV files
-│   └── run.py                       # Main script to run all processes
-├── logs/                     # Log files directory
-└── requirements.txt          # Required Python packages
+│   ├── vulnerability_aggregator.py  # Aggregation script
+│   ├── dashboard_connector.py       # Grafana database connector
+│   ├── nessus_connector.py          # Nessus API connector
+│   ├── file_watcher.py              # File monitoring system
+│   └── run.py                       # Main execution script
+├── logs/                   # Log files directory
+└── requirements.txt        # Required Python packages
 ```
 
-## License
+## Installation and Setup
 
-This project is not licensed for commercial use outside of Uniti Fiber.
+### 1. System Requirements
+
+- Linux server (Ubuntu recommended) with at least 4GB RAM
+- Python 3.7+ with pip
+- Tenable Nessus Essentials
+- Grafana (OSS or Cloud)
+
+### 2. Python Dependencies
+
+Install required Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Nessus Setup
+
+- Install Nessus Essentials following the [official guide](https://docs.tenable.com/nessus/Content/InstallNessus.htm)
+- Configure Nessus for vulnerability scanning (basic scan configuration is sufficient)
+- Create API access key and secret key in Nessus UI (Settings → API Keys)
+
+### 4. Configuration
+
+Update the `config.py` file with your specific settings:
+
+```python
+# Nessus settings
+NESSUS_URL = 'https://your-nessus-server:8834'
+ACCESS_KEY = 'your-access-key'
+SECRET_KEY = 'your-secret-key'
+
+# Directory paths
+RAW_DATA_DIR = './data/raw'
+PROCESSED_DATA_DIR = './data/processed'
+LOG_DIR = './logs'
+
+# Alert thresholds
+ALERT_THRESHOLDS = {
+    'Critical': 0,  # Any critical vulnerability triggers an alert
+    'High': 5,      # 5 or more high vulnerabilities trigger an alert
+    'Medium': 10,   # 10 or more medium vulnerabilities trigger an alert
+    'Low': 20       # 20 or more low vulnerabilities trigger an alert
+}
+```
+
+### 5. Grafana Setup
+
+1. Install Grafana following the [official documentation](https://grafana.com/docs/grafana/latest/installation/)
+2. Install the SQLite plugin for Grafana:
+   ```bash
+   grafana-cli plugins install frser-sqlite-datasource
+   ```
+3. Configure SMTP for Grafana alerts by editing the `grafana.ini` file:
+   ```ini
+   [smtp]
+   enabled = true
+   host = smtp.example.com:587
+   user = your-email@example.com
+   password = your-email-password
+   from_address = alerts@example.com
+   from_name = Vulnerability Alert System
+   startTLS_policy = OpportunisticStartTLS
+   ```
+4. Restart Grafana:
+   ```bash
+   sudo systemctl restart grafana-server
+   ```
+
+## Running the System
+
+### Manual Execution
+
+Run the main script to process vulnerability data:
+
+```bash
+python scripts/run.py
+```
+
+### Automated Execution
+
+1. Use the file watcher to automatically process new CSV files:
+   ```bash
+   python scripts/file_watcher.py
+   ```
+
+2. Or set up a cron job for scheduled execution:
+   ```
+   0 8 * * * cd /path/to/uniti_vulnerability_system && python3 scripts/run.py >> logs/cron.log 2>&1
+   ```
+
+## Dashboard Setup
+
+1. Import the dashboard JSON (`Vulnerability Dashboard-1745870476728.json`) into Grafana:
+   - Navigate to Dashboards → Import
+   - Upload or paste the JSON content
+   - Configure the SQLite data source
+
+2. Configure the SQLite data source:
+   - Name: `Vulnerability Database`
+   - Path: `/path/to/uniti_vulnerability_system/data/db/vulnerability_data.db`
+   - Test the connection
+
+## Alert Configuration
+
+Replace the email functionality with Grafana's built-in alerting:
+
+1. Create Contact Points:
+   - Navigate to Alerting → Contact points
+   - Add an email contact point for your team
+   - Configure with appropriate email addresses
+
+2. Create Alert Rules:
+   - Critical Vulnerabilities Alert
+   - New Device Detection Alert
+   - Weekly Vulnerability Summary
+
+Example SQL for Critical Vulnerabilities alert:
+```sql
+SELECT COUNT(*) as critical_count
+FROM vulnerabilities
+WHERE risk = 'Critical'
+AND is_new_scan = 1
+```
+
+### Modifying Alert Thresholds
+
+Edit the `ALERT_THRESHOLDS` in `config.py` to adjust sensitivity based on your organization's risk tolerance.
+
+## Troubleshooting
+
+- **Error connecting to Nessus**: Verify API credentials and network connectivity
+- **No data in dashboard**: Check SQLite database for data, ensure data connector is working
+- **Missing alert emails**: Verify Grafana SMTP configuration, check spam folder
