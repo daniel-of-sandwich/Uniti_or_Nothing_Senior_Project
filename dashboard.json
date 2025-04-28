@@ -41,73 +41,6 @@
               },
               {
                 "color": "red",
-                "value": 1
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 3,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "auto",
-        "wideLayout": true
-      },
-      "pluginVersion": "11.5.2",
-      "targets": [
-        {
-          "queryText": "SELECT COUNT(DISTINCT cve_id) as total_CVEs \nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))",
-          "queryType": "table",
-          "rawQueryText": "SELECT COUNT(DISTINCT cve_id) as total_CVEs \nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))",
-          "refId": "A",
-          "timeColumns": [
-            "time",
-            "ts"
-          ]
-        }
-      ],
-      "title": "Total Vulnerabilites",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "frser-sqlite-datasource",
-        "uid": "fehm5cgurtx4wd"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              },
-              {
-                "color": "red",
                 "value": 80
               }
             ]
@@ -116,9 +49,9 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 3,
-        "w": 12,
-        "x": 12,
+        "h": 4,
+        "w": 4,
+        "x": 0,
         "y": 0
       },
       "id": 7,
@@ -142,9 +75,9 @@
       "pluginVersion": "11.5.2",
       "targets": [
         {
-          "queryText": "SELECT COUNT(DISTINCT Host) as total_hosts \nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))",
+          "queryText": "SELECT COUNT(DISTINCT host) as total_hosts \nFROM vulnerabilities",
           "queryType": "table",
-          "rawQueryText": "SELECT COUNT(DISTINCT Host) as total_hosts \nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))",
+          "rawQueryText": "SELECT COUNT(DISTINCT host) as total_hosts \nFROM vulnerabilities",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -153,6 +86,203 @@
         }
       ],
       "title": "Total hosts",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "uid": "fehm5cgurtx4wd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "avg_cvss"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 70
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "max_cvss"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 87
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "host"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 149
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "scan_date"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 104
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 4,
+        "y": 0
+      },
+      "id": 13,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "countRows": false,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "11.5.2",
+      "targets": [
+        {
+          "queryText": "SELECT \n  host,\n  scan_name,\n  scan_date,\n  AVG(cvss_score) as avg_cvss,\n  MAX(cvss_score) as max_cvss,\n  COUNT(*) as vulnerability_count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nGROUP BY host\nORDER BY avg_cvss DESC",
+          "queryType": "table",
+          "rawQueryText": "SELECT \n  host,\n  scan_name,\n  scan_date,\n  AVG(cvss_score) as avg_cvss,\n  MAX(cvss_score) as max_cvss,\n  COUNT(*) as vulnerability_count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nGROUP BY host\nORDER BY avg_cvss DESC",
+          "refId": "A",
+          "timeColumns": [
+            "time",
+            "ts"
+          ]
+        }
+      ],
+      "title": "Average CVSS by Host",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "fehm5cgurtx4wd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "#EAB839",
+                "value": 10
+              },
+              {
+                "color": "#6ED0E0",
+                "value": 25
+              },
+              {
+                "color": "#EF843C",
+                "value": 50
+              },
+              {
+                "color": "red",
+                "value": 100
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 4,
+        "x": 0,
+        "y": 4
+      },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.5.2",
+      "targets": [
+        {
+          "queryText": "SELECT COUNT(*) as total_vulnerabilities \nFROM vulnerabilities",
+          "queryType": "table",
+          "rawQueryText": "SELECT COUNT(*) as total_vulnerabilities \nFROM vulnerabilities",
+          "refId": "A",
+          "timeColumns": [
+            "time",
+            "ts"
+          ]
+        }
+      ],
+      "title": "Total Vulnerabilites",
       "type": "stat"
     },
     {
@@ -187,13 +317,223 @@
             ]
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cvss_score"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 96
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "protocol"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 73
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "port"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 62
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "risk"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 79
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "host"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 139
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cve_id"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 136
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "scan_date"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 102
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "name"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 462
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "risk"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "Critical": {
+                        "color": "dark-red",
+                        "index": 3,
+                        "text": "Critical!"
+                      },
+                      "High": {
+                        "color": "dark-orange",
+                        "index": 2,
+                        "text": "High"
+                      },
+                      "Low": {
+                        "color": "blue",
+                        "index": 0,
+                        "text": "Low"
+                      },
+                      "Medium": {
+                        "color": "semi-dark-yellow",
+                        "index": 1,
+                        "text": "Medium"
+                      }
+                    },
+                    "type": "value"
+                  }
+                ]
+              },
+              {
+                "id": "color"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "cvss_score"
+            },
+            "properties": [
+              {
+                "id": "mappings",
+                "value": [
+                  {
+                    "options": {
+                      "from": 0,
+                      "result": {
+                        "color": "blue",
+                        "index": 0
+                      },
+                      "to": 3.9
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 4,
+                      "result": {
+                        "color": "semi-dark-yellow",
+                        "index": 1
+                      },
+                      "to": 6.9
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 7,
+                      "result": {
+                        "color": "semi-dark-orange",
+                        "index": 2
+                      },
+                      "to": 8.9
+                    },
+                    "type": "range"
+                  },
+                  {
+                    "options": {
+                      "from": 9,
+                      "result": {
+                        "color": "dark-red",
+                        "index": 3
+                      },
+                      "to": 10
+                    },
+                    "type": "range"
+                  }
+                ]
+              },
+              {
+                "id": "color"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              }
+            ]
+          }
+        ]
       },
       "gridPos": {
         "h": 7,
         "w": 24,
         "x": 0,
-        "y": 3
+        "y": 8
       },
       "id": 10,
       "options": {
@@ -206,14 +546,20 @@
           ],
           "show": false
         },
-        "showHeader": true
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": false,
+            "displayName": "scan_name"
+          }
+        ]
       },
       "pluginVersion": "11.5.2",
       "targets": [
         {
-          "queryText": "SELECT cve_id, host, risk, protocol, port, name, scan_date \nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nORDER BY \n  CASE WHEN risk = 'Critical' THEN 1\n       WHEN risk = 'High' THEN 2\n       WHEN risk = 'Medium' THEN 3\n       WHEN risk = 'Low' THEN 4\n       ELSE 5\n  END,\n  host, port",
+          "queryText": "SELECT \n  cve_id, \n  host, \n  risk, \n  cvss_score,\n  protocol, \n  port, \n  name, \n  scan_date,\n  scan_name\nFROM vulnerabilities\nWHERE ('{CVE-1999-0524,CVE-1999-0511,CVE-2007-1858,CVE-2020-11022,CVE-2020-11023,CVE-2013-2566,CVE-2015-2808,CVE-1999-0517,CVE-2016-2183}' = 'All' OR cve_id IN ('CVE-1999-0524','CVE-1999-0511','CVE-2007-1858','CVE-2020-11022','CVE-2020-11023','CVE-2013-2566','CVE-2015-2808','CVE-1999-0517','CVE-2016-2183')) \nAND ('{192.168.50.1,192.168.50.188,192.168.50.245,10.20.120.1,192.168.137.70,192.168.0.1,192.168.0.21,192.168.0.25,192.168.0.26,192.168.0.6,192.168.0.7,192.168.0.9,192.168.0.22,192.168.0.23,192.168.0.28}' = 'All' OR host IN ('192.168.50.1','192.168.50.188','192.168.50.245','10.20.120.1','192.168.137.70','192.168.0.1','192.168.0.21','192.168.0.25','192.168.0.26','192.168.0.6','192.168.0.7','192.168.0.9','192.168.0.22','192.168.0.23','192.168.0.28'))\nAND ('{Critical,High,Medium,Low}' = 'All' OR risk IN ('Critical','High','Medium','Low'))\nORDER BY \n  cvss_score DESC,\n  CASE WHEN risk = 'Critical' THEN 1\n       WHEN risk = 'High' THEN 2\n       WHEN risk = 'Medium' THEN 3\n       WHEN risk = 'Low' THEN 4\n       ELSE 5\n  END,\n  host, port",
           "queryType": "table",
-          "rawQueryText": "SELECT cve_id, host, risk, protocol, port, name, scan_date \nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nORDER BY \n  CASE WHEN risk = 'Critical' THEN 1\n       WHEN risk = 'High' THEN 2\n       WHEN risk = 'Medium' THEN 3\n       WHEN risk = 'Low' THEN 4\n       ELSE 5\n  END,\n  host, port",
+          "rawQueryText": "SELECT \n  cve_id, \n  host, \n  risk, \n  cvss_score,\n  protocol, \n  port, \n  name, \n  scan_date,\n  scan_name\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nORDER BY \n  cvss_score DESC,\n  CASE WHEN risk = 'Critical' THEN 1\n       WHEN risk = 'High' THEN 2\n       WHEN risk = 'Medium' THEN 3\n       WHEN risk = 'Low' THEN 4\n       ELSE 5\n  END,\n  host, port",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -221,7 +567,7 @@
           ]
         }
       ],
-      "title": "NAME ME",
+      "title": "Scan Results",
       "type": "table"
     },
     {
@@ -277,7 +623,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 10
+        "y": 15
       },
       "id": 5,
       "options": {
@@ -307,9 +653,9 @@
       "pluginVersion": "11.5.2",
       "targets": [
         {
-          "queryText": "SELECT scan_date, critical_count, high_count, medium_count, low_count \nFROM scan_summary\n",
+          "queryText": "SELECT scan_date, critical_count, high_count, medium_count, low_count \nFROM scan_summary",
           "queryType": "table",
-          "rawQueryText": "SELECT scan_date, critical_count, high_count, medium_count, low_count \nFROM scan_summary\n",
+          "rawQueryText": "SELECT scan_date, critical_count, high_count, medium_count, low_count \nFROM scan_summary",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -358,7 +704,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 10
+        "y": 15
       },
       "id": 9,
       "options": {
@@ -376,9 +722,9 @@
       "pluginVersion": "11.5.2",
       "targets": [
         {
-          "queryText": "SELECT cve_id,risk, COUNT(*) as count\r\nFROM vulnerabilities\r\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \r\nAND\r\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\r\nAND\r\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\r\nGROUP BY cve_id\r\nORDER BY count DESC\r\nLIMIT 10",
+          "queryText": "SELECT cve_id, risk, COUNT(*) as count\r\nFROM vulnerabilities\r\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \r\nAND ('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\r\nAND ('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\r\nGROUP BY cve_id, risk\r\nORDER BY count DESC\r\nLIMIT 10",
           "queryType": "table",
-          "rawQueryText": "SELECT cve_id,risk, COUNT(*) as count\r\nFROM vulnerabilities\r\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \r\nAND\r\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\r\nAND\r\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\r\nGROUP BY cve_id\r\nORDER BY count DESC\r\nLIMIT 10",
+          "rawQueryText": "SELECT cve_id, risk, COUNT(*) as count\r\nFROM vulnerabilities\r\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \r\nAND ('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\r\nAND ('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\r\nGROUP BY cve_id, risk\r\nORDER BY count DESC\r\nLIMIT 10",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -440,7 +786,7 @@
         "h": 8,
         "w": 12,
         "x": 0,
-        "y": 18
+        "y": 23
       },
       "id": 6,
       "options": {
@@ -518,7 +864,7 @@
         "h": 8,
         "w": 12,
         "x": 12,
-        "y": 18
+        "y": 23
       },
       "id": 8,
       "options": {
@@ -536,9 +882,9 @@
       "pluginVersion": "11.5.2",
       "targets": [
         {
-          "queryText": "SELECT Host, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nGROUP BY Host, Risk\nORDER BY Host, CASE \n    WHEN Risk = 'Critical' THEN 1\n    WHEN Risk = 'High' THEN 2\n    WHEN Risk = 'Medium' THEN 3\n    WHEN Risk = 'Low' THEN 4\n    ELSE 5\nEND",
+          "queryText": "SELECT host, risk, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nGROUP BY host, risk\nORDER BY host, CASE \n    WHEN risk = 'Critical' THEN 1\n    WHEN risk = 'High' THEN 2\n    WHEN risk = 'Medium' THEN 3\n    WHEN risk = 'Low' THEN 4\n    ELSE 5\nEND",
           "queryType": "table",
-          "rawQueryText": "SELECT Host, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nGROUP BY Host, Risk\nORDER BY Host, CASE \n    WHEN Risk = 'Critical' THEN 1\n    WHEN Risk = 'High' THEN 2\n    WHEN Risk = 'Medium' THEN 3\n    WHEN Risk = 'Low' THEN 4\n    ELSE 5\nEND",
+          "rawQueryText": "SELECT host, risk, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nGROUP BY host, risk\nORDER BY host, CASE \n    WHEN risk = 'Critical' THEN 1\n    WHEN risk = 'High' THEN 2\n    WHEN risk = 'Medium' THEN 3\n    WHEN risk = 'Low' THEN 4\n    ELSE 5\nEND",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -597,10 +943,102 @@
         "overrides": []
       },
       "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 31
+      },
+      "id": 12,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.5.2",
+      "targets": [
+        {
+          "queryText": "SELECT cve_id, cvss_score, risk, host, name, scan_date\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nORDER BY cvss_score DESC\nLIMIT 10",
+          "queryType": "table",
+          "rawQueryText": "SELECT cve_id, cvss_score, risk, host, name, scan_date\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nORDER BY cvss_score DESC\nLIMIT 10",
+          "refId": "A",
+          "timeColumns": [
+            "time",
+            "ts"
+          ]
+        }
+      ],
+      "title": "Top 10 Vulnerabilities by CVSS Score",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "frser-sqlite-datasource",
+        "uid": "fehm5cgurtx4wd"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
         "h": 7,
         "w": 12,
         "x": 0,
-        "y": 26
+        "y": 39
       },
       "id": 11,
       "options": {
@@ -629,9 +1067,9 @@
       "pluginVersion": "11.5.2",
       "targets": [
         {
-          "queryText": "SELECT protocol, port, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nGROUP BY protocol, port\nORDER BY count DESC\nLIMIT 10",
+          "queryText": "SELECT protocol, port, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nGROUP BY protocol, port\nORDER BY count DESC\nLIMIT 10",
           "queryType": "table",
-          "rawQueryText": "SELECT protocol, port, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' or cve_id IN (${CVE_Filter:sqlstring})) \nAND\n('$Host_Filter' = 'All' or host IN (${Host_Filter:sqlstring}))\nAND\n('$Risk_Filter' = 'All' or risk IN (${Risk_Filter:sqlstring}))\nGROUP BY protocol, port\nORDER BY count DESC\nLIMIT 10",
+          "rawQueryText": "SELECT protocol, port, COUNT(*) as count\nFROM vulnerabilities\nWHERE ('$CVE_Filter' = 'All' OR cve_id IN (${CVE_Filter:sqlstring})) \nAND ('$Host_Filter' = 'All' OR host IN (${Host_Filter:sqlstring}))\nAND ('$Risk_Filter' = 'All' OR risk IN (${Risk_Filter:sqlstring}))\nGROUP BY protocol, port\nORDER BY count DESC\nLIMIT 10",
           "refId": "A",
           "timeColumns": [
             "time",
@@ -679,7 +1117,7 @@
         "h": 7,
         "w": 12,
         "x": 12,
-        "y": 26
+        "y": 39
       },
       "id": 2,
       "options": {
@@ -725,13 +1163,13 @@
             "$__all"
           ]
         },
-        "definition": "SELECT DISTINCT cve_id\nFROM vulnerabilities\nWHERE cve_id != 'Unknown'",
+        "definition": "SELECT DISTINCT cve_id FROM vulnerabilities WHERE cve_id != 'Unknown'",
         "includeAll": true,
         "label": "CVE",
         "multi": true,
         "name": "CVE_Filter",
         "options": [],
-        "query": "SELECT DISTINCT cve_id\nFROM vulnerabilities\nWHERE cve_id != 'Unknown'",
+        "query": "SELECT DISTINCT cve_id FROM vulnerabilities WHERE cve_id != 'Unknown'",
         "refresh": 1,
         "regex": "",
         "type": "query"
@@ -744,13 +1182,13 @@
             "$__all"
           ]
         },
-        "definition": "SELECT DISTINCT host\nFROM vulnerabilities",
+        "definition": "SELECT DISTINCT host FROM vulnerabilities",
         "includeAll": true,
         "label": "Hosts",
         "multi": true,
         "name": "Host_Filter",
         "options": [],
-        "query": "SELECT DISTINCT host\nFROM vulnerabilities",
+        "query": "SELECT DISTINCT host FROM vulnerabilities",
         "refresh": 1,
         "regex": "",
         "type": "query"
@@ -804,6 +1242,6 @@
   "timezone": "browser",
   "title": "Vulnerability Dashboard",
   "uid": "fehm6z1ickirke",
-  "version": 31,
+  "version": 54,
   "weekStart": ""
 }
