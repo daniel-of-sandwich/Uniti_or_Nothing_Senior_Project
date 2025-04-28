@@ -43,8 +43,6 @@ This system processes vulnerability reports from Tenable Nessus Essentials, aggr
 
 ```
 uniti_vulnerability_system/
-├── config/
-│   ├── config.py           # Main configuration file 
 ├── data/
 │   ├── raw/                # Raw CSV files from Nessus
 │   ├── processed/          # Aggregated CSV files
@@ -54,8 +52,8 @@ uniti_vulnerability_system/
 │   ├── dashboard_connector.py       # Grafana database connector
 │   ├── nessus_connector.py          # Nessus API connector
 │   ├── file_watcher.py              # File monitoring system
-│   └── run.py                       # Main execution script
-├── logs/                   # Log files directory
+├── config.py           # Main configuration file 
+├── run.py              # Main execution script
 └── requirements.txt        # Required Python packages
 ```
 
@@ -63,10 +61,10 @@ uniti_vulnerability_system/
 
 ### 1. System Requirements
 
-- Linux server (Ubuntu recommended) with at least 4GB RAM
+- Linux server with at least 4GB RAM
 - Python 3.7+ with pip
-- Tenable Nessus Essentials
-- Grafana (OSS or Cloud)
+- Tenable Nessus
+- Grafana OSS
 
 ### 2. Python Dependencies
 
@@ -78,7 +76,6 @@ pip install -r requirements.txt
 
 ### 3. Nessus Setup
 
-- Install Nessus Essentials following the [official guide](https://docs.tenable.com/nessus/Content/InstallNessus.htm)
 - Configure Nessus for vulnerability scanning (basic scan configuration is sufficient)
 - Create API access key and secret key in Nessus UI (Settings → API Keys)
 
@@ -108,12 +105,11 @@ ALERT_THRESHOLDS = {
 
 ### 5. Grafana Setup
 
-1. Install Grafana following the [official documentation](https://grafana.com/docs/grafana/latest/installation/)
-2. Install the SQLite plugin for Grafana:
+1. Install the SQLite plugin for Grafana:
    ```bash
    grafana-cli plugins install frser-sqlite-datasource
    ```
-3. Configure SMTP for Grafana alerts by editing the `grafana.ini` file:
+2. Configure SMTP for Grafana alerts by editing the `grafana.ini` file:
    ```ini
    [smtp]
    enabled = true
@@ -124,7 +120,7 @@ ALERT_THRESHOLDS = {
    from_name = Vulnerability Alert System
    startTLS_policy = OpportunisticStartTLS
    ```
-4. Restart Grafana:
+3. Restart Grafana:
    ```bash
    sudo systemctl restart grafana-server
    ```
@@ -136,24 +132,19 @@ ALERT_THRESHOLDS = {
 Run the main script to process vulnerability data:
 
 ```bash
-python scripts/run.py
+python run.py
 ```
 
 ### Automated Execution
 
-1. Use the file watcher to automatically process new CSV files:
+Use the file watcher to automatically process new CSV files:
    ```bash
    python scripts/file_watcher.py
    ```
 
-2. Or set up a cron job for scheduled execution:
-   ```
-   0 8 * * * cd /path/to/uniti_vulnerability_system && python3 scripts/run.py >> logs/cron.log 2>&1
-   ```
-
 ## Dashboard Setup
 
-1. Import the dashboard JSON (`Vulnerability Dashboard-1745870476728.json`) into Grafana:
+1. Import the dashboard JSON (`Vulnerability Dashboard-####.json`) into Grafana:
    - Navigate to Dashboards → Import
    - Upload or paste the JSON content
    - Configure the SQLite data source
