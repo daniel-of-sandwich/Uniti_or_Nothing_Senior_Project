@@ -1,22 +1,14 @@
 # config.py
 
 # Nessus settings
-NESSUS_URL = 'https://192.168.0.29:8834'  # Update with your Nessus server IP
-ACCESS_KEY = 'access_key'  # Update with your actual access key
-SECRET_KEY = 'secret_key'  # Update with your actual secret key
+NESSUS_URL = 'https://0.0.0.0:8834'  # Nessus server IP
+ACCESS_KEY = 'yourAccessKey'  # Update with actual access key
+SECRET_KEY = 'yourSecretKey'  # Update with actual secret key
 
 # Directory paths
 RAW_DATA_DIR = './data/raw'
 PROCESSED_DATA_DIR = './data/processed'
 LOG_DIR = './logs'
-
-# Email settings
-SMTP_SERVER = 'smtp.example.com'  # Update with your SMTP server
-SMTP_PORT = 587  # Common port for TLS
-SMTP_USER = 'your_email@example.com'
-SMTP_PASSWORD = 'your_email_password'
-EMAIL_SENDER = 'nessus-alerts@example.com'
-EMAIL_RECIPIENTS = ['admin@example.com', 'security@example.com']
 
 # Alert thresholds (# of vulnerabilities that trigger an alert)
 ALERT_THRESHOLDS = {
@@ -37,7 +29,7 @@ CVSS_THRESHOLD = {
 # Database settings
 DB_PATH = './data/db/vulnerability_data.db'
 
-# Folders to scan (empty list means all folders except 'Trash')
+# Folders to scan (All folders except 'Trash')
 FOLDERS = []
 
 # Features to keep from CSV exports
@@ -45,4 +37,19 @@ KEEP_FEATURES = [
     'Plugin ID', 'CVE', 'CVSS v2.0 Base Score', 
     'Risk', 'Host', 'Protocol', 'Port', 'Name',
     'Synopsis', 'Description', 'Solution'
+]
+
+# Email configuration (Mailtrap)
+EMAIL_CONFIG = {
+    'SMTP_SERVER': 'sandbox.smtp.mailtrap.io',
+    'SMTP_PORT': 2525,          
+    'SMTP_USER': 'user',
+    'SMTP_PASSWORD': 'pass',
+    'FROM_EMAIL': 'alerts@mail.com',   
+    'FROM_NAME': 'Uniti Vulnerability Alert System'
+}
+
+# Email recipients
+EMAIL_RECIPIENTS = [
+    'youremail@mail.com'
 ]
