@@ -36,7 +36,9 @@ def create_database_if_not_exists():
         port INTEGER,
         name TEXT,
         scan_date TEXT,
-        scan_name TEXT,          -- Added scan name field
+        scan_name TEXT,          -- Scan name field
+        source_file TEXT,        -- Source file field
+        is_new_scan INTEGER,     -- Flag for new scans (1=new, 0=existing)
         import_date TEXT         -- When this record was imported
     )
     ''')
@@ -48,7 +50,8 @@ def create_database_if_not_exists():
         batch_id TEXT,           -- Unique identifier for each aggregation run
         ip_address TEXT,
         scan_date TEXT,
-        import_date TEXT,        -- When this record was imported
+        source_file TEXT,        
+        import_date TEXT,        -- When record was imported
         vulnerability_count INTEGER
     )
     ''')
@@ -59,7 +62,9 @@ def create_database_if_not_exists():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         batch_id TEXT,           -- Unique identifier for each aggregation run
         scan_date TEXT,
-        scan_name TEXT,          -- Added scan name field
+        scan_name TEXT,          
+        source_file TEXT,        
+        is_new_scan INTEGER,     -- Flag for new scans (1=new, 0=existing)
         import_date TEXT,        -- When this record was imported
         total_vulnerabilities INTEGER,
         critical_count INTEGER,
@@ -106,6 +111,11 @@ def update_database():
             (batch_id, import_date, f"Automated import on {import_date}")
         )
         
+        # Get list of previously processed files
+        cursor = conn.cursor()
+        cursor.execute("SELECT DISTINCT source_file FROM scan_summary")
+        processed_files = set([row[0] for row in cursor.fetchall()])
+        
         # Process vulnerability data
         vuln_file = os.path.join(PROCESSED_DATA_DIR, 'aggregated_vulnerabilities.csv')
         if os.path.exists(vuln_file):
@@ -117,6 +127,7 @@ def update_database():
             # Insert data
             if not vulns_df.empty:
                 counter = 0  # Counter for successful CVE extractions
+                inserted_count = 0  # Count of inserted/updated records
                 
                 for _, row in vulns_df.iterrows():
                     # Extract CVE ID - using multiple possible sources
@@ -170,15 +181,51 @@ def update_database():
                     name = row.get('Name', '')
                     scan_date = row.get('scan_date', '')
                     scan_name = row.get('scan_name', '')
+                    source_file = row.get('source_file', '')
                     
-                    # Insert into database with batch_id and import_date
-                    conn.execute(
-                        "INSERT INTO vulnerabilities (batch_id, cve_id, cvss_score, risk, host, protocol, port, name, scan_date, scan_name, import_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        (batch_id, cve_id, cvss_score, risk, host, protocol, port, name, scan_date, scan_name, import_date)
+                    # Determine if this is a new scan
+                    is_new_scan = 1 if source_file not in processed_files else 0
+                    
+                    # Check if this vulnerability already exists in the database
+                    cursor.execute(
+                        """
+                        SELECT id FROM vulnerabilities 
+                        WHERE cve_id = ? AND host = ? AND protocol = ? AND port = ? AND name = ?
+                        """, 
+                        (cve_id, host, protocol, port, name)
                     )
+                    
+                    existing = cursor.fetchone()
+                    
+                    if existing:
+                        # Update the existing record
+                        cursor.execute(
+                            """
+                            UPDATE vulnerabilities 
+                            SET batch_id = ?, risk = ?, cvss_score = ?, scan_date = ?, 
+                                scan_name = ?, source_file = ?, is_new_scan = ?, import_date = ?
+                            WHERE id = ?
+                            """,
+                            (batch_id, risk, cvss_score, scan_date, scan_name, source_file, 
+                             is_new_scan, import_date, existing[0])
+                        )
+                    else:
+                        # Insert a new record
+                        cursor.execute(
+                            """
+                            INSERT INTO vulnerabilities 
+                            (batch_id, cve_id, cvss_score, risk, host, protocol, port, name, 
+                             scan_date, scan_name, source_file, is_new_scan, import_date) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (batch_id, cve_id, cvss_score, risk, host, protocol, port, name, 
+                             scan_date, scan_name, source_file, is_new_scan, import_date)
+                        )
+                        inserted_count += 1
                 
-                print(f"Added {len(vulns_df)} vulnerability records to database")
-                print(f"Successfully extracted {counter} CVE IDs")
+                print(f"Processed {len(vulns_df)} vulnerability records!")
+                print(f"Added {inserted_count} new records to database!")
+                print(f"Successfully extracted {counter} CVE IDs!")
         
         # Process new devices data
         devices_file = os.path.join(PROCESSED_DATA_DIR, 'new_devices.csv')
@@ -191,11 +238,21 @@ def update_database():
             # Insert data
             if not devices_df.empty:
                 for _, row in devices_df.iterrows():
-                    conn.execute(
-                        "INSERT INTO new_devices (batch_id, ip_address, scan_date, vulnerability_count, import_date) VALUES (?, ?, ?, ?, ?)",
-                        (batch_id, row['ip_address'], row['scan_date'], row['vulnerability_count'], import_date)
+                    source_file = row.get('source_file', '')
+                    ip_address = row.get('ip_address', '')
+                    
+                    # Check if this device already exists
+                    cursor.execute(
+                        "SELECT id FROM new_devices WHERE ip_address = ? AND source_file = ?",
+                        (ip_address, source_file)
                     )
-                print(f"Added {len(devices_df)} device records to database")
+                    
+                    if not cursor.fetchone():  # Only insert if it doesn't exist
+                        conn.execute(
+                            "INSERT INTO new_devices (batch_id, ip_address, scan_date, source_file, vulnerability_count, import_date) VALUES (?, ?, ?, ?, ?, ?)",
+                            (batch_id, ip_address, row['scan_date'], source_file, row['vulnerability_count'], import_date)
+                        )
+                print(f"Processed {len(devices_df)} device records")
         
         # Process scan summary data
         summary_file = os.path.join(PROCESSED_DATA_DIR, 'scan_summary.csv')
@@ -208,11 +265,47 @@ def update_database():
             # Insert data
             if not summary_df.empty:
                 for _, row in summary_df.iterrows():
-                    conn.execute(
-                        "INSERT INTO scan_summary (batch_id, scan_date, scan_name, total_vulnerabilities, critical_count, high_count, medium_count, low_count, import_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                        (batch_id, row['scan_date'], row.get('scan_name', ''), row['total_vulnerabilities'], row['critical_count'], row['high_count'], row['medium_count'], row['low_count'], import_date)
+                    source_file = row.get('source_file', '')
+                    scan_date = row.get('scan_date', '')
+                    
+                    # Check if this summary already exists
+                    cursor.execute(
+                        "SELECT id FROM scan_summary WHERE source_file = ? AND scan_date = ?",
+                        (source_file, scan_date)
                     )
-                print(f"Added {len(summary_df)} scan summary records to database")
+                    
+                    existing = cursor.fetchone()
+                    is_new_scan = 1 if source_file not in processed_files else 0
+                    
+                    if existing:
+                        # Update existing record
+                        cursor.execute(
+                            """
+                            UPDATE scan_summary
+                            SET batch_id = ?, is_new_scan = ?, total_vulnerabilities = ?,
+                                critical_count = ?, high_count = ?, medium_count = ?, 
+                                low_count = ?, import_date = ?
+                            WHERE id = ?
+                            """,
+                            (batch_id, is_new_scan, row['total_vulnerabilities'], 
+                             row['critical_count'], row['high_count'], row['medium_count'], 
+                             row['low_count'], import_date, existing[0])
+                        )
+                    else:
+                        # Insert new record
+                        conn.execute(
+                            """
+                            INSERT INTO scan_summary 
+                            (batch_id, scan_date, scan_name, source_file, is_new_scan, 
+                             total_vulnerabilities, critical_count, high_count, medium_count, 
+                             low_count, import_date) 
+                            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                            """,
+                            (batch_id, scan_date, row.get('scan_name', ''), source_file, 
+                             is_new_scan, row['total_vulnerabilities'], row['critical_count'], 
+                             row['high_count'], row['medium_count'], row['low_count'], import_date)
+                        )
+                print(f"Processed {len(summary_df)} scan summary records")
         
         # Commit changes and close connection
         conn.commit()
