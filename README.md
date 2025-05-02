@@ -17,53 +17,49 @@ This system processes vulnerability reports from Tenable Nessus Essentials, aggr
 1. A Grafana dashboard with visual aids
 2. Automated email alerts with vulnerability summaries
 
-## Features
-
-- Processes Nessus Essentials vulnerability scan outputs 
-- Tracks new devices on the network
-- Aggregates alerts based on priority
-- Sends email notifications when thresholds are met
-- Visual dashboard with color-coded risk levels
-
-### Key Features
+## Key Features
 
 - Automated aggregation of Nessus vulnerability scan reports
 - Detailed visualization dashboard with risk-based color coding
 - New device detection between network scans
-- Smart alerting based on configurable thresholds
+- Email notifications with custom formatting and distribution lists
 - Historical tracking of network vulnerability status
 
 ## System Architecture
 
 ```
-[Nessus Scans] → [CSV Export] → [Python Processing] → [SQLite Database] → [Grafana Dashboard] → [Grafana Alerts]
+[Nessus Scans] → [CSV Export] → [Python Processing] → [SQLite Database] → [Grafana Dashboard]
+                                                    ↓
+                                          [Email Alert System]
 ```
 
 ## Project Structure
 
 ```
 uniti_vulnerability_system/
+├── config/
+│   └── config.py            # Main configuration file
 ├── data/
-│   ├── raw/                # Raw CSV files from Nessus
-│   ├── processed/          # Aggregated CSV files
-│   └── db/                 # SQLite database
+│   ├── raw/                 # Raw CSV files from Nessus
+│   ├── processed/           # Aggregated CSV files
+│   └── db/                  # SQLite database
 ├── scripts/
 │   ├── vulnerability_aggregator.py  # Aggregation script
-│   ├── dashboard_connector.py       # Grafana database connector
+│   ├── dashboard_connector.py       # Database connector
+│   ├── email_sender.py              # Email notification script
 │   ├── nessus_connector.py          # Nessus API connector
-│   ├── file_watcher.py              # File monitoring system
-├── config.py           # Main configuration file 
-├── run.py              # Main execution script
-└── requirements.txt        # Required Python packages
+│   └── file_watcher.py              # File monitoring system
+├── run.py                   # Main execution script
+└── requirements.txt         # Required Python packages
 ```
 
 ## Installation and Setup
 
 ### 1. System Requirements
 
-- Server with at least 4GB RAM
+- Linux server with at least 4GB RAM
 - Python 3.7+ with pip
-- Tenable Nessus
+- Tenable Nessus Essentials
 - Grafana OSS
 
 ### 2. Python Dependencies
@@ -76,12 +72,13 @@ pip install -r requirements.txt
 
 ### 3. Nessus Setup
 
-- Configure Nessus for vulnerability scanning (basic scan configuration is sufficient)
-- Create API access key and secret key in Nessus UI (Settings → API Keys)
+- Install Nessus Essentials on your server
+- Configure vulnerability scanning (target specification, IP ranges)
+- Create API access key and secret key in Nessus UI
 
 ### 4. Configuration
 
-Update the `config.py` file with your specific settings:
+Update the `config.py` file with your settings:
 
 ```python
 # Nessus settings
@@ -89,41 +86,35 @@ NESSUS_URL = 'https://your-nessus-server:8834'
 ACCESS_KEY = 'your-access-key'
 SECRET_KEY = 'your-secret-key'
 
-# Directory paths
-RAW_DATA_DIR = './data/raw'
-PROCESSED_DATA_DIR = './data/processed'
-LOG_DIR = './logs'
-
-# Alert thresholds
-ALERT_THRESHOLDS = {
-    'Critical': 0,  # Any critical vulnerability triggers an alert
-    'High': 5,      # 5 or more high vulnerabilities trigger an alert
-    'Medium': 10,   # 10 or more medium vulnerabilities trigger an alert
-    'Low': 20       # 20 or more low vulnerabilities trigger an alert
+# Email configuration
+EMAIL_CONFIG = {
+    'SMTP_SERVER': 'your-smtp-server',
+    'SMTP_PORT': 587,
+    'SMTP_USER': 'your-username',
+    'SMTP_PASSWORD': 'your-password',
+    'FROM_EMAIL': 'alerts@example.com',
+    'FROM_NAME': 'Vulnerability Alert System'
 }
+
+# Email recipients
+EMAIL_RECIPIENTS = [
+    'security-team@example.com',
+    'admin@example.com'
+]
 ```
 
 ### 5. Grafana Setup
 
-1. Install the SQLite plugin for Grafana:
+1. Install Grafana OSS and the SQLite plugin:
    ```bash
    grafana-cli plugins install frser-sqlite-datasource
    ```
-2. Configure SMTP for Grafana alerts by editing the `grafana.ini` file:
-   ```ini
-   [smtp]
-   enabled = true
-   host = smtp.example.com:587
-   user = your-email@example.com
-   password = your-email-password
-   from_address = alerts@example.com
-   from_name = Vulnerability Alert System
-   startTLS_policy = OpportunisticStartTLS
-   ```
-3. Restart Grafana:
-   ```bash
-   sudo systemctl restart grafana-server
-   ```
+
+2. Import the dashboard JSON file into Grafana
+
+3. Configure the SQLite data source:
+   - Name: `Vulnerability Database`
+   - Path: `/path/to/data/db/vulnerability_data.db`
 
 ## Running the System
 
@@ -138,50 +129,29 @@ python run.py
 ### Automated Execution
 
 Use the file watcher to automatically process new CSV files:
-   ```bash
-   python scripts/file_watcher.py
-   ```
-
-## Dashboard Setup
-
-1. Import the dashboard JSON (`Vulnerability Dashboard-####.json`) into Grafana:
-   - Navigate to Dashboards → Import
-   - Upload or paste the JSON content
-   - Configure the SQLite data source
-
-2. Configure the SQLite data source:
-   - Name: `Vulnerability Database`
-   - Path: `/path/to/uniti_vulnerability_system/data/db/vulnerability_data.db`
-   - Test the connection
-
-## Alert Configuration
-
-Replace the email functionality with Grafana's built-in alerting:
-
-1. Create Contact Points:
-   - Navigate to Alerting → Contact points
-   - Add an email contact point for your team
-   - Configure with appropriate email addresses
-
-2. Create Alert Rules:
-   - Critical Vulnerabilities Alert
-   - New Device Detection Alert
-   - Weekly Vulnerability Summary
-
-Example SQL for Critical Vulnerabilities alert:
-```sql
-SELECT COUNT(*) as critical_count
-FROM vulnerabilities
-WHERE risk = 'Critical'
-AND is_new_scan = 1
+```bash
+python scripts/file_watcher.py
 ```
 
-### Modifying Alert Thresholds
+## Email Alerts
 
-Edit the `ALERT_THRESHOLDS` in `config.py` to adjust sensitivity based on your organization's risk tolerance.
+The system sends custom HTML emails when:
+- New devices are detected on the network
+- Critical vulnerabilities are found
+- Threshold levels of High/Medium vulnerabilities are reached
+
+Email alerts include:
+- Color-coded risk levels
+- Direct links to vulnerability details
+- Tables of affected hosts and ports
+- Summary statistics for quick assessment
+
+To modify email recipients:
+- Edit the `EMAIL_RECIPIENTS` list in `config.py`
 
 ## Troubleshooting
 
 - **Error connecting to Nessus**: Verify API credentials and network connectivity
-- **No data in dashboard**: Check SQLite database for data, ensure data connector is working
-- **Missing alert emails**: Verify Grafana SMTP configuration, check spam folder
+- **No data in dashboard**: Check SQLite database for data integrity
+- **Missing email alerts**: Verify SMTP configuration, check spam folder
+- **Processing errors**: Review log files for detailed error messages
