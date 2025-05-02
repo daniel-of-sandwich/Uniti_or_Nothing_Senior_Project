@@ -1,14 +1,14 @@
 # nessus_connector.py
+
 import os
 import sys
 import requests
 from requests.packages import urllib3
-import pandas as pd
-from datetime import datetime
+import time
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from config import NESSUS_URL, ACCESS_KEY, SECRET_KEY, RAW_DATA_DIR, FOLDERS, KEEP_FEATURES
+from config import NESSUS_URL, ACCESS_KEY, SECRET_KEY, RAW_DATA_DIR, FOLDERS
 
 def get(path, text=False):
     """GET request to Nessus"""
@@ -34,9 +34,20 @@ def post(path, payload):
         verify=False
     ).json()
 
+def wait_for_export_status(scan_id, file_id, max_attempts=60, delay=2):
+    """Wait for an export to be ready"""
+    attempts = 0
+    while attempts < max_attempts:
+        status = get(f'/scans/{scan_id}/export/{file_id}/status')
+        if status.get('status') == 'ready':
+            return True
+        time.sleep(delay)
+        attempts += 1
+    return False
+
 def get_nessus_data():
     """Connect to Nessus and download scan reports to the raw data directory"""
-    print("\nConnecting to Nessus...")
+    print("Connecting to Nessus...")
     
     # Create raw data directory if it doesn't exist
     os.makedirs(RAW_DATA_DIR, exist_ok=True)
@@ -58,8 +69,6 @@ def get_nessus_data():
         else:
             folder_names = FOLDERS
         
-        print(f"Using folders: {', '.join(folder_names)}")
-        
         # Get folder IDs for selected folders
         folder_ids = []
         for folder in r_scans['folders']:
@@ -68,57 +77,74 @@ def get_nessus_data():
         
         # Get scan IDs for vulnerability scans in selected folders
         scan_ids = []
-        for scan in r_scans['scans']:
-            if scan['folder_id'] in folder_ids and scan['scan_type'] == 'vuln':
-                scan_ids.append(scan['id'])
+        scan_names = {}  # Store scan names for later use
+        if 'scans' in r_scans:
+            for scan in r_scans['scans']:
+                if scan['folder_id'] in folder_ids and scan['scan_type'] == 'vuln':
+                    scan_ids.append(scan['id'])
+                    scan_names[scan['id']] = scan['name']
         
         if not scan_ids:
-            print("No vulnerability scans found in selected folders.")
+            print("No vulnerability scans found.")
             return False
         
-        print(f"Found {len(scan_ids)} vulnerability scans to download.")
+        print(f"Found {len(scan_ids)} scans to download.")
         
         # Request download tokens for each scan
         template_id = 197  # Required by Nessus API
-        token_to_scan_id = {}
+        export_data = {}
         for scan_id in scan_ids:
-            r_export = post(f'/scans/{scan_id}/export', {'format': 'csv', 'template_id': template_id})
-            if 'token' in r_export:
-                token_to_scan_id[r_export['token']] = scan_id
+            try:
+                r_export = post(f'/scans/{scan_id}/export', {'format': 'csv', 'template_id': template_id})
+                if 'file' in r_export:
+                    export_data[scan_id] = {
+                        'file_id': r_export['file'],
+                        'scan_name': scan_names.get(scan_id, f"scan_{scan_id}")
+                    }
+            except Exception as e:
+                print(f"Error exporting scan {scan_id}")
         
-        if not token_to_scan_id:
-            print("Failed to get download tokens for any scans.")
+        if not export_data:
+            print("Failed to export any scans.")
             return False
         
-        # Download each scan report
-        for token, scan_id in token_to_scan_id.items():
-            # Get scan name for the file
-            scan_name = None
-            for scan in r_scans['scans']:
-                if scan['id'] == scan_id:
-                    scan_name = scan['name']
-                    break
+        # Wait for exports to complete and download
+        successful_downloads = 0
+        for scan_id, data in export_data.items():
+            file_id = data['file_id']
+            scan_name = data['scan_name']
+            
+            # Wait for export to be ready
+            if not wait_for_export_status(scan_id, file_id):
+                continue
             
             # Create filename with scan ID and name
-            filename = f"{scan_id}_{scan_name.replace(' ', '_')}.csv"
+            safe_name = scan_name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+            filename = f"{scan_id}_{safe_name}.csv"
             file_path = os.path.join(RAW_DATA_DIR, filename)
             
-            print(f"Downloading scan: {scan_name} (ID: {scan_id})")
+            print(f"Downloading: {scan_name}")
             
-            # Download and save the CSV file
-            r_download = get(f'/tokens/{token}/download', True)
-            with open(file_path, 'w') as file:
-                file.write(r_download)
-            
-            print(f"Downloaded to: {file_path}")
+            try:
+                # Download the CSV file
+                r_download = get(f'/scans/{scan_id}/export/{file_id}/download', True)
+                with open(file_path, 'w', encoding='utf-8') as file:
+                    file.write(r_download)
+                
+                successful_downloads += 1
+            except Exception as e:
+                print(f"Error downloading scan {scan_name}")
         
-        print(f"Downloaded {len(token_to_scan_id)} scan reports successfully.")
+        print(f"Downloaded {successful_downloads} scan reports.")
+        
+        # Wait for files to be fully written
+        print("Writing to disk...")
+        time.sleep(3)
+        print("Done!")
         return True
         
     except Exception as e:
         print(f"Error connecting to Nessus: {e}")
-        import traceback
-        traceback.print_exc()
         return False
 
 if __name__ == "__main__":
@@ -126,4 +152,4 @@ if __name__ == "__main__":
     if success:
         print("Nessus data download completed successfully")
     else:
-        print("Nessus data download failed :(")
+        print("Nessus data download failed")
