@@ -1,4 +1,5 @@
 # run.py
+
 import os
 import sys
 import time
@@ -14,7 +15,11 @@ sys.path.append(SCRIPTS_DIR)
 # Import scripts
 from vulnerability_aggregator import aggregate_vulnerability_data
 from dashboard_connector import update_database
-from email_sender import create_html_report, send_email
+from nessus_connector import get_nessus_data
+
+# Import email_sender from scripts directory
+sys.path.append(os.path.join(BASE_DIR, 'scripts'))
+from email_sender import process_alerts
 
 def run_full_process():
     """Run the complete vulnerability analysis process"""
@@ -23,39 +28,37 @@ def run_full_process():
     
     print(f"\n=== Starting Vulnerability Analysis Process at {timestamp} ===")
     
-    # Step 1: Aggregate vulnerability data
-    print("\nStep 1: Aggregating vulnerability data...")
+    # Step 1: Pull data from Nessus
+    print("\nStep 1: Retrieving data from Nessus...")
+    if get_nessus_data():
+        print("Nessus data retrieval completed successfully")
+    else:
+        print("Nessus data retrieval failed")
+        return False
+    
+    # Step 2: Aggregate vulnerability data
+    print("\nStep 2: Aggregating vulnerability data...")
     if aggregate_vulnerability_data():
         print("Vulnerability aggregation completed successfully")
     else:
         print("Vulnerability aggregation failed")
         return False
     
-    # Step 2: Update the dashboard database
-    print("\nStep 2: Updating dashboard database...")
+    # Step 3: Update the dashboard database
+    print("\nStep 3: Updating dashboard database...")
     if update_database():
         print("Dashboard database update completed successfully")
     else:
         print("Dashboard database update failed")
         return False
     
-    # Step 3: Send email notification
-    print("\nStep 3: Sending email notification...")
-    # Path to processed CSV file
-    csv_file = os.path.join(BASE_DIR, 'data', 'processed', 'aggregated_vulnerabilities.csv')
-    
-    # Create HTML report
-    html_content = create_html_report(csv_file)
-    
-    if html_content:
-        # Send email with timestamp in subject
-        subject = f"Vulnerability Alert Report - {timestamp}"
-        if send_email(html_content, subject=subject):
-            print("Email notification sent successfully")
-        else:
-            print("Email notification sending failed")
+    # Step 4: Process and send email alerts
+    print("\nStep 4: Processing email alerts...")
+    if process_alerts():
+        print("Email alert processing completed successfully")
     else:
-        print("No email content created")
+        print("Email alert processing failed")
+        # Continue execution even if alerts fail
     
     # Calculate and display execution time
     execution_time = time.time() - start_time
