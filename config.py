@@ -2,8 +2,8 @@
 
 # Nessus settings
 NESSUS_URL = 'https://0.0.0.0:8834'  # Nessus server IP
-ACCESS_KEY = 'yourAccessKey'  # Update with actual access key
-SECRET_KEY = 'yourSecretKey'  # Update with actual secret key
+ACCESS_KEY = 'your-access-key'  # Update with actual access key
+SECRET_KEY = 'your-secret-key'  # Update with actual secret key
 
 # Directory paths
 RAW_DATA_DIR = './data/raw'
@@ -39,17 +39,18 @@ KEEP_FEATURES = [
     'Synopsis', 'Description', 'Solution'
 ]
 
-# Email configuration (Mailtrap)
+# Email configuration
 EMAIL_CONFIG = {
-    'SMTP_SERVER': 'sandbox.smtp.mailtrap.io',
-    'SMTP_PORT': 2525,          
-    'SMTP_USER': 'user',
-    'SMTP_PASSWORD': 'pass',
-    'FROM_EMAIL': 'alerts@mail.com',   
-    'FROM_NAME': 'Uniti Vulnerability Alert System'
+    'SMTP_SERVER': 'your-smtp-server',
+    'SMTP_PORT': 587,
+    'SMTP_USER': 'your-username',
+    'SMTP_PASSWORD': 'your-password',
+    'FROM_EMAIL': 'alerts@example.com',
+    'FROM_NAME': 'Vulnerability Alert System'
 }
 
 # Email recipients
 EMAIL_RECIPIENTS = [
-    'youremail@mail.com'
+    'security-team@example.com',
+    'admin@example.com'
 ]
