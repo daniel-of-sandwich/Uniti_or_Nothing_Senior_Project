@@ -154,3 +154,4 @@ To modify email recipients:
 - **No data in dashboard**: Check SQLite database for data integrity
 - **Missing email alerts**: Verify SMTP configuration, check spam folder
 - **Processing errors**: Review log files for detailed error messages
+- **NOTE:** In nessus_connector, the verify=False parameter in requests suppresses SSL certificate verification, which may be a security risk in production
