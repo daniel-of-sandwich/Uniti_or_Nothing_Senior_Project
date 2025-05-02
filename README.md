@@ -36,9 +36,7 @@ This system processes vulnerability reports from Tenable Nessus Essentials, aggr
 ## Project Structure
 
 ```
-uniti_vulnerability_system/
-├── config/
-│   └── config.py            # Main configuration file
+uniti_vulnerability_system/            
 ├── data/
 │   ├── raw/                 # Raw CSV files from Nessus
 │   ├── processed/           # Aggregated CSV files
@@ -49,6 +47,7 @@ uniti_vulnerability_system/
 │   ├── email_sender.py              # Email notification script
 │   ├── nessus_connector.py          # Nessus API connector
 │   └── file_watcher.py              # File monitoring system
+├── config.py                # Main configuration file
 ├── run.py                   # Main execution script
 └── requirements.txt         # Required Python packages
 ```
